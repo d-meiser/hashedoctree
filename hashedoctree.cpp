@@ -36,3 +36,13 @@ HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point)
 	}
 	return key;
 }
+
+HOTTree::HOTTree(
+	HOTBoundingBox bbox,
+	const HOTPoint* positions_begin,
+	const HOTPoint* positions_end,
+	const void* data_begin) :
+	bbox_(bbox),
+	positions_begin_(positions_begin),
+	positions_end_(positions_end),
+	data_begin_(data_begin) {}
