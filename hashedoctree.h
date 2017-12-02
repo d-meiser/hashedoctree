@@ -28,6 +28,8 @@ void HOTNodeComputeChildKeys(HOTNodeKey key, HOTNodeKey* child_keys);
 bool HOTNodeValidKey(HOTNodeKey key);
 int HOTNodeLevel(HOTNodeKey key);
 HOTNodeKey HOTNodeParent(HOTNodeKey key);
+HOTKey HOTNodeBegin(HOTNodeKey key);
+HOTKey HOTNodeEnd(HOTNodeKey key);
 
 // This should become an internal function down the road.
 HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point);

@@ -88,3 +88,18 @@ TEST(HOTNodeKey, ParentIsAtLowerLevel) {
   EXPECT_LT(HOTNodeLevel(HOTNodeParent(key)), HOTNodeLevel(key));
 }
 
+TEST(HOTNodeKey, BeginOfRootIsZero) {
+  EXPECT_EQ(0u, HOTNodeBegin(HOTNodeRoot()));
+}
+
+TEST(HOTNodeKey, EndOfRootIsTwoToTheThirty) {
+  EXPECT_EQ(1u << (3 * 10), HOTNodeEnd(HOTNodeRoot()));
+}
+
+TEST(HOTNodeKey, BeginSpotChecks) {
+  EXPECT_EQ(1u << (3 * 9), HOTNodeBegin(9u));
+  EXPECT_EQ(2u << (3 * 9), HOTNodeBegin(10u));
+  EXPECT_EQ(3u << (3 * 9), HOTNodeBegin(11u));
+  EXPECT_EQ(1u << (3 * 8), HOTNodeBegin(65u));
+  EXPECT_EQ(10u << (3 * 8), HOTNodeBegin(74u));
+}

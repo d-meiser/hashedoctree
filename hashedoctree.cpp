@@ -78,12 +78,16 @@ class HOTNode {
       // Maximum number of items in leaf nodes. This can be a configurable
       // parameter, but for now I just hardwire it.
       static const int MAX_NUM_ITEMS = 8;
-      if (NumItems() > MAX_NUM_ITEMS) {
+      static const int MAX_LEVELS = BITS_PER_DIM;
+      if (HOTNodeLevel(key_) < MAX_LEVELS && NumItems() > MAX_NUM_ITEMS) {
         leaf_ = false;
         // Build the octants.
         HOTNodeKey child_keys[8];
         HOTNodeComputeChildKeys(key_, child_keys);
         for (int octant = 0; octant < 8; ++octant) {
+          int i = (child_keys[octant] & (1 << 0)) == (1 << 0);
+          int j = (child_keys[octant] & (1 << 1)) == (1 << 1);
+          int k = (child_keys[octant] & (1 << 2)) == (1 << 2);
         }
       }
     }
@@ -172,4 +176,19 @@ int HOTNodeLevel(HOTNodeKey key) {
 
 HOTNodeKey HOTNodeParent(HOTNodeKey key) {
   return key >> 3;
+}
+
+HOTKey HOTNodeBegin(HOTNodeKey key) {
+  int level = HOTNodeLevel(key);
+  HOTKey begin = key ^ (1u << (3 * level));
+  begin <<= 3 * (BITS_PER_DIM - level);
+  return begin;
+}
+
+HOTKey HOTNodeEnd(HOTNodeKey key) {
+  int level = HOTNodeLevel(key);
+  HOTKey end = key ^ (1u << (3 * level));
+  ++end;
+  end <<= 3 * (BITS_PER_DIM - level);
+  return end;
 }
