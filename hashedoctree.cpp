@@ -135,10 +135,9 @@ class HOTNode {
     }
 
     void PrintNumItems(int indent) const {
-      for (int i = 0; i < indent; ++i) {
-        std::cout << ".";
-      }
-      std:: cout << NumItems() << "\n";
+      HOTNodePrint(key_);
+      std::cout << " ";
+      std::cout << NumItems() << "\n";
       for (int i = 0; i < 8; ++i) {
         if (children_[i]) {
           children_[i]->PrintNumItems(indent + 1);
@@ -271,4 +270,14 @@ HOTKey HOTNodeEnd(HOTNodeKey key) {
   ++end;
   end <<= 3 * (BITS_PER_DIM - level);
   return end;
+}
+
+void HOTNodePrint(HOTNodeKey key) {
+  for (int i = 31; i >= 0; --i) {
+    if (key & (1u << i)) {
+      std::cout << "1";
+    } else {
+      std::cout << "0";
+    }
+  }
 }
