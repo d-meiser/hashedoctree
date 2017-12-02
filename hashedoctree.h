@@ -23,20 +23,21 @@ typedef int32_t HOTKey;
 // This should become an internal function down the road.
 HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point);
 
+struct HOTItem {
+  HOTPoint position;
+  void* data;
+};
 
 class HOTTree {
  public:
-  HOTTree(HOTBoundingBox bbox,
-	  const HOTPoint* positions_begin,
-	  const HOTPoint* positions_end,
-	  const void* data_begin);
+  HOTTree(HOTBoundingBox bbox);
+
+  void InsertItems(const HOTItem* begin, const HOTItem* end);
 
  private:
   HOTBoundingBox bbox_;
-  const HOTPoint* positions_begin_;
-  const HOTPoint* positions_end_;
-  const void* data_begin_;
-  std::vector<HOTKey> permutation_;
+  std::vector<HOTItem> items_;
+  std::vector<HOTKey> keys_;
 };
 
 #endif

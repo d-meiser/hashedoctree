@@ -34,6 +34,5 @@ TEST(ComputeHash, CanComputeKeysOutsideOfBBox) {
 
 
 TEST(HOTTree, Ctor) {
-	HOTBoundingBox bbox{{0, 0, 0}, {1, 1, 1}};
-	EXPECT_NO_THROW(HOTTree(bbox, nullptr, nullptr, nullptr));
+	EXPECT_NO_THROW(HOTTree({{0, 0, 0}, {1, 1, 1}}));
 }
