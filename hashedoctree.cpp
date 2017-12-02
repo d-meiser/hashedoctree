@@ -19,7 +19,7 @@ static HOTKey ComputeBucket(double min, double max, double pos, HOTKey num_bucke
   }
   int bucket = num_buckets * folded_pos / (max - min);
   assert(bucket >= 0);
-  assert(bucket < num_buckets);
+  assert((uint32_t)bucket < num_buckets);
   return bucket;
 }
 
@@ -66,9 +66,49 @@ static std::vector<T> permute(const std::vector<int>& permutation,
   return permuted_v;
 }
 
+
+
+class HOTNode {
+  public:
+    HOTNode(HOTNodeKey key, HOTBoundingBox bbox, const HOTKey* key_begin, const
+        HOTKey* key_end, const HOTItem* items_begin) :
+      key_(key), bbox_(bbox), leaf_(true), children_{nullptr},
+      key_begin_(key_begin), key_end_(key_end), items_begin_(items_begin)
+    {
+      // Maximum number of items in leaf nodes. This can be a configurable
+      // parameter, but for now I just hardwire it.
+      static const int MAX_NUM_ITEMS = 8;
+      if (NumItems() > MAX_NUM_ITEMS) {
+        leaf_ = false;
+        // Build the octants.
+        HOTNodeKey child_keys[8];
+        HOTNodeComputeChildKeys(key_, child_keys);
+        for (int octant = 0; octant < 8; ++octant) {
+        }
+      }
+    }
+
+    size_t NumItems() const {
+      return std::distance(key_begin_, key_end_);
+    }
+
+    HOTNodeKey key_;
+    HOTBoundingBox bbox_;
+    bool leaf_;
+    HOTNode* children_[8];
+
+    const HOTKey* key_begin_;
+    const HOTKey* key_end_;
+    const HOTItem* items_begin_;
+};
+
+
 HOTTree::HOTTree(HOTBoundingBox bbox) : bbox_(bbox) {}
+HOTTree::~HOTTree() {}
 
 void HOTTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
+  if (begin == end) return;
+
   std::vector<HOTItem> new_items(begin, end);
   std::vector<HOTKey> new_keys = HOTComputeItemKeys(bbox_, begin, end);
 
@@ -81,5 +121,55 @@ void HOTTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
   new_keys = permute(sort_permutation, new_keys);
   new_items = permute(sort_permutation, new_items);
 
+  // TODO: Merge the new keys and items with keys and items we already have.
 
+  RebuildNodes();
+}
+
+
+void HOTTree::RebuildNodes() {
+  if (keys_.size() == 0) {
+    root_.reset(nullptr);
+    return;
+  }
+
+  root_.reset(new HOTNode(
+        1, bbox_, &keys_[0], &keys_[0] + keys_.size(), &items_[0]));
+}
+
+
+void HOTNodeComputeChildKeys(HOTNodeKey key, HOTNodeKey* child_keys) {
+  HOTNodeKey first_child = key << 3;
+  for (int i = 0; i < 8; ++i) {
+    child_keys[i] = first_child + i;
+  }
+}
+
+HOTNodeKey HOTNodeRoot() {
+  return 1u;
+}
+
+bool HOTNodeValidKey(HOTNodeKey key) {
+  if (key & (1u << (BITS_PER_DIM * 3 + 1))) return false;
+  HOTNodeKey m = 1u << (BITS_PER_DIM * 3);
+  while (m > 0) {
+    if (key & m) return true;
+    for (int i = 0; i < 3; ++i, m >>= 1) {
+      if (key & m) return false;
+    }
+  }
+  return false;
+}
+
+int HOTNodeLevel(HOTNodeKey key) {
+  int level = BITS_PER_DIM;
+  while (level > 0) {
+    if (key & (1u << (level * 3))) return level;
+    --level;
+  }
+  return level;
+}
+
+HOTNodeKey HOTNodeParent(HOTNodeKey key) {
+  return key >> 3;
 }
