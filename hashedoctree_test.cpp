@@ -36,3 +36,8 @@ TEST(ComputeHash, CanComputeKeysOutsideOfBBox) {
 TEST(HOTTree, Ctor) {
   EXPECT_NO_THROW(HOTTree({{0, 0, 0}, {1, 1, 1}}));
 }
+
+TEST(HOTTree, InsertItems) {
+  HOTTree tree({{0, 0, 0}, {1, 1, 1}});
+  EXPECT_NO_THROW(tree.InsertItems(nullptr, nullptr));
+}
