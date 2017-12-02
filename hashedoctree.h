@@ -29,15 +29,15 @@ struct HOTItem {
 };
 
 class HOTTree {
- public:
-  HOTTree(HOTBoundingBox bbox);
+  public:
+    HOTTree(HOTBoundingBox bbox);
 
-  void InsertItems(const HOTItem* begin, const HOTItem* end);
+    void InsertItems(const HOTItem* begin, const HOTItem* end);
 
- private:
-  HOTBoundingBox bbox_;
-  std::vector<HOTItem> items_;
-  std::vector<HOTKey> keys_;
+  private:
+    HOTBoundingBox bbox_;
+    std::vector<HOTItem> items_;
+    std::vector<HOTKey> keys_;
 };
 
 #endif
