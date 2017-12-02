@@ -72,7 +72,7 @@ class HOTNode {
   public:
     HOTNode(HOTNodeKey key, HOTBoundingBox bbox, const HOTKey* key_begin, const
         HOTKey* key_end, const HOTItem* items_begin) :
-      key_(key), bbox_(bbox), leaf_(true), children_{nullptr},
+      key_(key), bbox_(bbox), children_{nullptr},
       key_begin_(key_begin), key_end_(key_end), items_begin_(items_begin)
     {
       // Maximum number of items in leaf nodes. This can be a configurable
@@ -80,14 +80,32 @@ class HOTNode {
       static const int MAX_NUM_ITEMS = 8;
       static const int MAX_LEVELS = BITS_PER_DIM;
       if (HOTNodeLevel(key_) < MAX_LEVELS && NumItems() > MAX_NUM_ITEMS) {
-        leaf_ = false;
         // Build the octants.
         HOTNodeKey child_keys[8];
         HOTNodeComputeChildKeys(key_, child_keys);
+        double lx = 0.5 * (bbox_.max.x - bbox_.min.x);
+        double ly = 0.5 * (bbox_.max.y - bbox_.min.y);
+        double lz = 0.5 * (bbox_.max.z - bbox_.min.z);
         for (int octant = 0; octant < 8; ++octant) {
           int i = (child_keys[octant] & (1 << 0)) == (1 << 0);
           int j = (child_keys[octant] & (1 << 1)) == (1 << 1);
           int k = (child_keys[octant] & (1 << 2)) == (1 << 2);
+          HOTBoundingBox child_box({
+              {bbox_.min.x + i * lx, bbox_.min.y + j * ly, bbox_.min.z + k * lz},
+              {bbox_.min.x + (i + 1) * lx, bbox_.min.y + (j + 1) * ly, bbox_.min.z + (k + 1) * lz}
+              });
+          const HOTKey* begin = std::lower_bound(
+              key_begin_, key_end_, HOTNodeBegin(child_keys[octant]));
+          const HOTKey* end = std::lower_bound(
+              key_begin_, key_end_, HOTNodeEnd(child_keys[octant]));
+          int num_child_items = std::distance(begin, end);
+          if (num_child_items > 0) {
+            children_[octant].reset(
+                new HOTNode(child_keys[octant], child_box,
+                    begin, end, items_begin_ + std::distance(key_begin_, begin)));
+          } else {
+            children_[octant].reset(nullptr);
+          }
         }
       }
     }
@@ -96,14 +114,53 @@ class HOTNode {
       return std::distance(key_begin_, key_end_);
     }
 
+    int NumNodes() const {
+      int num_nodes = 1;
+      for (int i = 0; i < 8; ++i) {
+        if (children_[i]) {
+          num_nodes += children_[i]->NumNodes();
+        }
+      }
+      return num_nodes;
+    }
+
+    int Depth() const {
+      int depth = 1;
+      for (int i = 0; i < 8; ++i) {
+        if (children_[i]) {
+          depth = std::max(depth, 1 + children_[i]->Depth());
+        }
+      }
+      return depth;
+    }
+
+    void PrintNumItems(int indent) const {
+      for (int i = 0; i < indent; ++i) {
+        std::cout << ".";
+      }
+      std:: cout << NumItems() << "\n";
+      for (int i = 0; i < 8; ++i) {
+        if (children_[i]) {
+          children_[i]->PrintNumItems(indent + 1);
+        }
+      }
+    }
+
+  private:
     HOTNodeKey key_;
     HOTBoundingBox bbox_;
-    bool leaf_;
-    HOTNode* children_[8];
+    std::unique_ptr<HOTNode> children_[8];
 
     const HOTKey* key_begin_;
     const HOTKey* key_end_;
     const HOTItem* items_begin_;
+
+    bool IsLeaf() const {
+      for (int i = 0; i < 8; ++i) {
+        if (children_[i]) return false;
+      }
+      return true;
+    }
 };
 
 
@@ -126,10 +183,33 @@ void HOTTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
   new_items = permute(sort_permutation, new_items);
 
   // TODO: Merge the new keys and items with keys and items we already have.
+  // For now we just clobber the existing keys and items. That resets the tree
+  // with each InsertItems.
+  keys_ = new_keys;
+  items_ = new_items;
 
   RebuildNodes();
 }
 
+int HOTTree::NumNodes() const {
+  if (root_) {
+    return root_->NumNodes();
+  } else {
+    return 0;
+  }
+}
+
+int HOTTree::Depth() const {
+  if (root_) {
+    return root_->Depth();
+  } else {
+    return 0;
+  }
+}
+
+void HOTTree::PrintNumItems() const {
+  if (root_) root_->PrintNumItems(0);
+}
 
 void HOTTree::RebuildNodes() {
   if (keys_.size() == 0) {

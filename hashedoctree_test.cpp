@@ -58,10 +58,54 @@ static std::vector<Entity> BuildEntitiesAtRandomLocations(
   return entities;
 }
 
+static std::vector<HOTItem> BuildItems(std::vector<Entity>* entities) {
+  std::vector<HOTItem> items;
+  int n = entities->size();
+  items.reserve(n);
+  for (int i = 0; i < n; ++i) {
+    items.push_back(HOTItem{(*entities)[i].position, &(*entities)[i]});
+  }
+  return items;
+}
 
-TEST(HOTTree, InsertItems) {
+TEST(HOTTree, InsertItemsDoesntThrow) {
   HOTTree tree({{0, 0, 0}, {1, 1, 1}});
   EXPECT_NO_THROW(tree.InsertItems(nullptr, nullptr));
+}
+
+TEST(HOTTree, OneItemYieldsOneNode) {
+  HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
+  HOTTree tree(bbox);
+  int num_entities = 1;
+  auto entities = BuildEntitiesAtRandomLocations(bbox, num_entities);
+  auto items = BuildItems(&entities);
+  tree.InsertItems(&items[0], &items[0] + num_entities);
+  EXPECT_EQ(1, tree.NumNodes());
+  EXPECT_EQ(1, tree.Depth());
+}
+
+TEST(HOTTree, CanInsertAFewItems) {
+  HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
+  HOTTree tree(bbox);
+  int num_entities = 10;
+  auto entities = BuildEntitiesAtRandomLocations(bbox, num_entities);
+  auto items = BuildItems(&entities);
+  tree.InsertItems(&items[0], &items[0] + num_entities);
+  EXPECT_EQ(1, tree.NumNodes());
+  EXPECT_EQ(1, tree.Depth());
+  tree.PrintNumItems();
+}
+
+TEST(HOTTree, DISABLED_CanInsertAThousandItems) {
+  HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
+  HOTTree tree(bbox);
+  int num_entities = 1000;
+  auto entities = BuildEntitiesAtRandomLocations(bbox, num_entities);
+  auto items = BuildItems(&entities);
+  tree.InsertItems(&items[0], &items[0] + num_entities);
+  EXPECT_EQ(1, tree.NumNodes());
+  EXPECT_EQ(1, tree.Depth());
+  tree.PrintNumItems();
 }
 
 TEST(HOTNodeKey, ZeroIsNotValidNode) {

@@ -47,6 +47,9 @@ class HOTTree {
     ~HOTTree();
 
     void InsertItems(const HOTItem* begin, const HOTItem* end);
+    int NumNodes() const;
+    int Depth() const;
+    void PrintNumItems() const;
 
   private:
     HOTBoundingBox bbox_;
