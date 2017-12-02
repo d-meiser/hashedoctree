@@ -9,7 +9,7 @@
 // We use 32 bit keys. That is large enough for 2**10 buckets
 // along each dimension.
 static const int BITS_PER_DIM = 10;
-static const HOTKey NUM_LEAF_BUCKETS = 1 << BITS_PER_DIM;
+static const HOTKey NUM_LEAF_BUCKETS = 1u << BITS_PER_DIM;
 
 static HOTKey ComputeBucket(double min, double max, double pos, HOTKey num_buckets) {
   assert(max > min);
@@ -25,14 +25,15 @@ static HOTKey ComputeBucket(double min, double max, double pos, HOTKey num_bucke
 
 
 HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point) {
-  int buckets[3] = {0};
+  HOTKey buckets[3] = {0};
   buckets[0] = ComputeBucket(bbox.min.x, bbox.max.x, point.x, NUM_LEAF_BUCKETS);
   buckets[1] = ComputeBucket(bbox.min.y, bbox.max.y, point.y, NUM_LEAF_BUCKETS);
   buckets[2] = ComputeBucket(bbox.min.z, bbox.max.z, point.z, NUM_LEAF_BUCKETS);
   HOTKey key = 0;
   for (int i = 0; i < 3; ++i) {
     for (int b = 0; b < BITS_PER_DIM; ++b) {
-      key |= (buckets[i] & (1 << b)) << i;
+      uint32_t mask = 1u << b;
+      key |= ((uint32_t)((buckets[i] & mask) == mask)) << (3 * b + i);
     }
   }
   return key;
