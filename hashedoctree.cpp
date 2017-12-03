@@ -68,12 +68,24 @@ static std::vector<T> permute(const std::vector<int>& permutation,
 }
 
 
+HOTBoundingBox ComputeChildBox(HOTBoundingBox bbox, int octant) {
+  double lx = 0.5 * (bbox.max.x - bbox.min.x);
+  double ly = 0.5 * (bbox.max.y - bbox.min.y);
+  double lz = 0.5 * (bbox.max.z - bbox.min.z);
+  int i = (octant & (1 << 0)) == (1 << 0);
+  int j = (octant & (1 << 1)) == (1 << 1);
+  int k = (octant & (1 << 2)) == (1 << 2);
+  return HOTBoundingBox({
+      {bbox.min.x + i * lx, bbox.min.y + j * ly, bbox.min.z + k * lz},
+      {bbox.min.x + (i + 1) * lx, bbox.min.y + (j + 1) * ly, bbox.min.z + (k + 1) * lz}
+      });
+}
 
 class HOTNode {
   public:
-    HOTNode(HOTNodeKey key, HOTBoundingBox bbox, const HOTKey* key_begin, const
+    HOTNode(HOTNodeKey key, const HOTKey* key_begin, const
         HOTKey* key_end, const HOTItem* items_begin) :
-      key_(key), bbox_(bbox), children_{nullptr},
+      key_(key), children_{nullptr},
       key_begin_(key_begin), key_end_(key_end), items_begin_(items_begin)
     {
       // Maximum number of items in leaf nodes. This can be a configurable
@@ -84,17 +96,7 @@ class HOTNode {
         // Build the octants.
         HOTNodeKey child_keys[8];
         HOTNodeComputeChildKeys(key_, child_keys);
-        double lx = 0.5 * (bbox_.max.x - bbox_.min.x);
-        double ly = 0.5 * (bbox_.max.y - bbox_.min.y);
-        double lz = 0.5 * (bbox_.max.z - bbox_.min.z);
         for (int octant = 0; octant < 8; ++octant) {
-          int i = (child_keys[octant] & (1 << 0)) == (1 << 0);
-          int j = (child_keys[octant] & (1 << 1)) == (1 << 1);
-          int k = (child_keys[octant] & (1 << 2)) == (1 << 2);
-          HOTBoundingBox child_box({
-              {bbox_.min.x + i * lx, bbox_.min.y + j * ly, bbox_.min.z + k * lz},
-              {bbox_.min.x + (i + 1) * lx, bbox_.min.y + (j + 1) * ly, bbox_.min.z + (k + 1) * lz}
-              });
           const HOTKey* begin = std::lower_bound(
               key_begin_, key_end_, HOTNodeBegin(child_keys[octant]));
           const HOTKey* end = std::lower_bound(
@@ -102,7 +104,7 @@ class HOTNode {
           int num_child_items = std::distance(begin, end);
           if (num_child_items > 0) {
             children_[octant].reset(
-                new HOTNode(child_keys[octant], child_box,
+                new HOTNode(child_keys[octant], 
                     begin, end, items_begin_ + std::distance(key_begin_, begin)));
           } else {
             children_[octant].reset(nullptr);
@@ -138,6 +140,10 @@ class HOTNode {
     void PrintNumItems(int indent) const {
       HOTNodePrint(key_);
       std::cout << " ";
+      for (int i = 0; i < indent; ++i) {
+        std::cout << ".";
+      }
+      std::cout << " ";
       std::cout << NumItems() << "\n";
       for (int i = 0; i < 8; ++i) {
         if (children_[i]) {
@@ -148,7 +154,6 @@ class HOTNode {
 
   private:
     HOTNodeKey key_;
-    HOTBoundingBox bbox_;
     std::unique_ptr<HOTNode> children_[8];
 
     const HOTKey* key_begin_;
@@ -218,7 +223,7 @@ void HOTTree::RebuildNodes() {
   }
 
   root_.reset(new HOTNode(
-        1, bbox_, &keys_[0], &keys_[0] + keys_.size(), &items_[0]));
+        1, &keys_[0], &keys_[0] + keys_.size(), &items_[0]));
 }
 
 

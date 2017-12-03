@@ -87,25 +87,15 @@ TEST(HOTTree, OneItemYieldsOneNode) {
 TEST(HOTTree, CanInsertAFewItems) {
   HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
   HOTTree tree(bbox);
-  int num_entities = 10;
+  int num_entities = 100;
   auto entities = BuildEntitiesAtRandomLocations(bbox, num_entities);
   auto items = BuildItems(&entities);
   tree.InsertItems(&items[0], &items[0] + num_entities);
-  EXPECT_EQ(1, tree.NumNodes());
-  EXPECT_EQ(1, tree.Depth());
-  tree.PrintNumItems();
-}
-
-TEST(HOTTree, DISABLED_CanInsertAThousandItems) {
-  HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
-  HOTTree tree(bbox);
-  int num_entities = 1000;
-  auto entities = BuildEntitiesAtRandomLocations(bbox, num_entities);
-  auto items = BuildItems(&entities);
-  tree.InsertItems(&items[0], &items[0] + num_entities);
-  EXPECT_EQ(1, tree.NumNodes());
-  EXPECT_EQ(1, tree.Depth());
-  tree.PrintNumItems();
+  // With the default configuration these items don't fit into
+  // a single node. So it's save to assert that we have more than
+  // one node which then necessarily is in a tree with more than one level.
+  EXPECT_LT(1, tree.NumNodes());
+  EXPECT_LT(1, tree.Depth());
 }
 
 TEST(HOTNodeKey, ZeroIsNotValidNode) {
