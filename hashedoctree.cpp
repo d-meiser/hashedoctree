@@ -90,7 +90,7 @@ class HOTNode {
     {
       // Maximum number of items in leaf nodes. This can be a configurable
       // parameter, but for now I just hardwire it.
-      static const int MAX_NUM_ITEMS = 8;
+      static const int MAX_NUM_ITEMS = 16;
       static const int MAX_LEVELS = BITS_PER_DIM;
       if (HOTNodeLevel(key_) < MAX_LEVELS && NumItems() > MAX_NUM_ITEMS) {
         // Build the octants.
@@ -150,6 +150,16 @@ class HOTNode {
           children_[i]->PrintNumItems(indent + 1);
         }
       }
+    }
+
+    size_t Size() const {
+      size_t size = sizeof(*this);
+      for (int i = 0; i < 8; ++i) {
+        if (children_[i]) {
+          size += children_[i]->Size();
+        }
+      }
+      return size;
     }
 
   private:
@@ -224,6 +234,16 @@ void HOTTree::RebuildNodes() {
 
   root_.reset(new HOTNode(
         1, &keys_[0], &keys_[0] + keys_.size(), &items_[0]));
+}
+
+size_t HOTTree::Size() const {
+  size_t size = sizeof(*this);
+  size += items_.size() * sizeof(HOTItem);
+  size += keys_.size() * sizeof(HOTKey);
+  if (root_) {
+    size += root_->Size();
+  }
+  return size;
 }
 
 

@@ -51,6 +51,7 @@ class HOTTree {
     int NumNodes() const;
     int Depth() const;
     void PrintNumItems() const;
+    size_t Size() const;
 
   private:
     HOTBoundingBox bbox_;

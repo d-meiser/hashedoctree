@@ -73,6 +73,23 @@ TEST(HOTTree, InsertItemsDoesntThrow) {
   EXPECT_NO_THROW(tree.InsertItems(nullptr, nullptr));
 }
 
+TEST(HOTTree, EmptyTreeHasNonZeroSize) {
+  HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
+  HOTTree tree(bbox);
+  EXPECT_LT(0ull, tree.Size());
+}
+
+TEST(HOTTree, SizeGrowsWhenInsertingItems) {
+  HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
+  HOTTree tree(bbox);
+  size_t empty_size = tree.Size();
+  int num_entities = 100;
+  auto entities = BuildEntitiesAtRandomLocations(bbox, num_entities);
+  auto items = BuildItems(&entities);
+  tree.InsertItems(&items[0], &items[0] + num_entities);
+  EXPECT_LT(empty_size, tree.Size());
+}
+
 TEST(HOTTree, OneItemYieldsOneNode) {
   HOTBoundingBox bbox({{0, 0, 0}, {1, 1, 1}});
   HOTTree tree(bbox);
