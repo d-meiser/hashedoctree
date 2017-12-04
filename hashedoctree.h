@@ -45,7 +45,7 @@ class HOTNode;
 class HOTTree {
   public:
     HOTTree(HOTBoundingBox bbox);
-    HOTTree(HOTTree&& other);
+    HOTTree(HOTTree&&);
     HOTTree& operator=(HOTTree&& rhs);
     ~HOTTree();
 

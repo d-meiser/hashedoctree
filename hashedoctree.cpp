@@ -229,7 +229,7 @@ class HOTNode {
 
 
 HOTTree::HOTTree(HOTBoundingBox bbox) : bbox_(bbox) {}
-HOTTree::HOTTree(HOTTree&& other) = default;
+HOTTree::HOTTree(HOTTree&&) = default;
 HOTTree& HOTTree::operator=(HOTTree&& rhs) = default;
 HOTTree::~HOTTree() {}
 
