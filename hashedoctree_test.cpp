@@ -126,34 +126,32 @@ static HOTTree ConstructTreeWithRandomItems(HOTBoundingBox bbox, int n) {
 
 static const HOTBoundingBox unit_cube({{0, 0, 0}, {1, 1, 1}});
 
+// Count visits of vertices excluding self.
 class CountVisits : public HOTTree::VertexVisitor {
   public:
-    CountVisits() : count_{0} {}
+    CountVisits(void* data) : count_{0}, data_{data} {}
     ~CountVisits() override {}
-    bool Visit(HOTItem*) override {
-      ++count_;
+    bool Visit(HOTItem* item) override {
+      if (item->data != data_) {
+        ++count_;
+      }
       return true;
     }
     void Reset() {
       count_ = 0;
     }
-    int count_;
-};
 
-TEST(HOTTree, VertexVisitsSelf) {
-  HOTTree tree = ConstructTreeWithRandomItems(unit_cube, 20);
-  HOTItem first_item = *tree.begin();
-  CountVisits counter;
-  tree.VisitNearVertices(&counter, first_item.position, 1.0e-16);
-  EXPECT_GT(counter.count_, 0);
-}
+    int count_;
+    void* data_;
+};
 
 TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   HOTTree tree = ConstructTreeWithRandomItems(unit_cube, 100);
   double eps = 1.0e-10;
-  CountVisits counter;
 
   std::vector<HOTItem> items(tree.begin(), tree.end());
+
+  CountVisits counter(items[0].data);
 
   // Along x
   items[0].position = HOTPoint({0.5 - 0.5 * eps, 0.1, 0.1});
@@ -162,7 +160,7 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   HOTTree treex(unit_cube);
   treex.InsertItems(&items[0], &items[0] + items.size());
   treex.VisitNearVertices(&counter, items[0].position, eps);
-  EXPECT_GT(counter.count_, 1);
+  EXPECT_GT(counter.count_, 0);
 
   // Along y
   items[0].position = HOTPoint({0.1, 0.5 - 0.5 * eps, 0.1});
@@ -171,7 +169,7 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   HOTTree treey(unit_cube);
   treey.InsertItems(&items[0], &items[0] + items.size());
   treey.VisitNearVertices(&counter, items[0].position, eps);
-  EXPECT_GT(counter.count_, 1);
+  EXPECT_GT(counter.count_, 0);
 
   // Along z
   items[0].position = HOTPoint({0.1, 0.1, 0.5 - 0.5 * eps});
@@ -180,8 +178,22 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   HOTTree treez(unit_cube);
   treez.InsertItems(&items[0], &items[0] + items.size());
   treez.VisitNearVertices(&counter, items[0].position, eps);
-  EXPECT_GT(counter.count_, 1);
+  EXPECT_GT(counter.count_, 0);
 }
+
+TEST(HOTTree, VisitEachVerticesNeighbours) {
+  int n = 1000;
+  HOTTree tree = ConstructTreeWithRandomItems(unit_cube, n);
+  double eps = 1.0e-3;
+  CountVisits counter(nullptr);
+  auto item = tree.begin();
+  for (int i = 0; i < n; ++i) {
+    counter.data_ = item[i].data;
+    tree.VisitNearVertices(&counter, item[i].position, eps);
+  }
+  EXPECT_GE(counter.count_, 0);
+}
+
 
 TEST(HOTNodeKey, ZeroIsNotValidNode) {
   EXPECT_FALSE(HOTNodeValidKey(0u));

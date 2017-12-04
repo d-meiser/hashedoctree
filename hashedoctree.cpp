@@ -114,7 +114,7 @@ class HOTNode {
     {
       // Maximum number of items in leaf nodes. This can be a configurable
       // parameter, but for now I just hardwire it.
-      static const int MAX_NUM_ITEMS = 16;
+      static const int MAX_NUM_ITEMS = 32;
       static const int MAX_LEVELS = BITS_PER_DIM;
       if (HOTNodeLevel(key_) < MAX_LEVELS && NumItems() > MAX_NUM_ITEMS) {
         // Build the octants.
