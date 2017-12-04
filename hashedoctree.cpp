@@ -65,11 +65,11 @@ HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point) {
 
 static std::vector<HOTKey> HOTComputeItemKeys(HOTBoundingBox bbox,
     const HOTItem* begin, const HOTItem* end) {
-  std::vector<HOTKey> keys;
-  std::transform(begin, end, std::back_inserter(keys),
-      [bbox](const HOTItem& item) {
-        return HOTComputeHash(bbox, item.position);
-      });
+  int n = std::distance(begin, end);
+  std::vector<HOTKey> keys(n);
+  for (int i = 0; i < n; ++i) {
+    keys[i] = HOTComputeHash(bbox, begin[i].position);
+  }
   return keys;
 }
 
