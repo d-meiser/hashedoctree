@@ -23,6 +23,30 @@ static HOTKey ComputeBucket(double min, double max, double pos, HOTKey num_bucke
   return bucket;
 }
 
+static double DistanceFromInterval(double a, double b, double x) {
+  assert(b >= a);
+  double dist = 0;
+  dist = std::max(dist, std::max(0.0, a - x));
+  dist = std::max(dist, std::max(0.0, x - b));
+  return dist;
+}
+
+static double LInfinity(const HOTBoundingBox& bbox, const HOTPoint& point) {
+  double dist = 0;
+  dist = std::max(dist, DistanceFromInterval(bbox.min.x, bbox.max.x, point.x));
+  dist = std::max(dist, DistanceFromInterval(bbox.min.y, bbox.max.y, point.y));
+  dist = std::max(dist, DistanceFromInterval(bbox.min.z, bbox.max.z, point.z));
+  return dist;
+}
+
+static double LInfinity(const HOTPoint& p0, const HOTPoint& p1) {
+  double dist = 0;
+  dist = std::max(dist, std::fabs(p0.x - p1.x));
+  dist = std::max(dist, std::fabs(p0.y - p1.y));
+  dist = std::max(dist, std::fabs(p0.z - p1.z));
+  return dist;
+}
+
 
 HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point) {
   HOTKey buckets[3] = {0};
@@ -83,9 +107,9 @@ HOTBoundingBox ComputeChildBox(HOTBoundingBox bbox, int octant) {
 
 class HOTNode {
   public:
-    HOTNode(HOTNodeKey key, const HOTKey* key_begin, const
-        HOTKey* key_end, const HOTItem* items_begin) :
-      key_(key), children_{nullptr},
+    HOTNode(HOTNodeKey key, HOTBoundingBox bbox, const HOTKey* key_begin, const
+        HOTKey* key_end, HOTItem* items_begin) :
+      key_(key), bbox_(bbox), children_{nullptr},
       key_begin_(key_begin), key_end_(key_end), items_begin_(items_begin)
     {
       // Maximum number of items in leaf nodes. This can be a configurable
@@ -105,12 +129,36 @@ class HOTNode {
           if (num_child_items > 0) {
             children_[octant].reset(
                 new HOTNode(child_keys[octant], 
-                    begin, end, items_begin_ + std::distance(key_begin_, begin)));
+                  ComputeChildBox(bbox_, octant),
+                  begin, end, items_begin_ + std::distance(key_begin_, begin)));
           } else {
             children_[octant].reset(nullptr);
           }
         }
       }
+    }
+
+    bool VisitNearVertices(
+        HOTTree::VertexVisitor* visitor, HOTPoint position, double eps) {
+      if (LInfinity(bbox_, position) >= eps) return true;
+      bool leaf = true;
+      for (int i = 0; i < 8; ++i) {
+        if (children_[i]) {
+          leaf = false;
+          if (!children_[i]->VisitNearVertices(visitor, position, eps)) {
+            return false;
+          }
+        }
+      }
+      if (!leaf) return true;
+      int n = std::distance(key_begin_, key_end_);
+      for (int i = 0; i < n; ++i) {
+        if (LInfinity(items_begin_[i].position, position) < eps) {
+           bool cont = visitor->Visit(&items_begin_[i]);
+           if (!cont) return false;
+        }
+      }
+      return true;
     }
 
     size_t NumItems() const {
@@ -164,11 +212,12 @@ class HOTNode {
 
   private:
     HOTNodeKey key_;
+    HOTBoundingBox bbox_;
     std::unique_ptr<HOTNode> children_[8];
 
     const HOTKey* key_begin_;
     const HOTKey* key_end_;
-    const HOTItem* items_begin_;
+    HOTItem* items_begin_;
 
     bool IsLeaf() const {
       for (int i = 0; i < 8; ++i) {
@@ -180,6 +229,8 @@ class HOTNode {
 
 
 HOTTree::HOTTree(HOTBoundingBox bbox) : bbox_(bbox) {}
+HOTTree::HOTTree(HOTTree&& other) = default;
+HOTTree& HOTTree::operator=(HOTTree&& rhs) = default;
 HOTTree::~HOTTree() {}
 
 void HOTTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
@@ -204,6 +255,14 @@ void HOTTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
   items_ = new_items;
 
   RebuildNodes();
+}
+
+bool HOTTree::VisitNearVertices(
+    VertexVisitor* visitor, HOTPoint position, double eps) {
+  if (root_) {
+    return root_->VisitNearVertices(visitor, position, eps);
+  }
+  return true;
 }
 
 int HOTTree::NumNodes() const {
@@ -233,7 +292,7 @@ void HOTTree::RebuildNodes() {
   }
 
   root_.reset(new HOTNode(
-        1, &keys_[0], &keys_[0] + keys_.size(), &items_[0]));
+        1, bbox_, &keys_[0], &keys_[0] + keys_.size(), &items_[0]));
 }
 
 size_t HOTTree::Size() const {
@@ -246,6 +305,13 @@ size_t HOTTree::Size() const {
   return size;
 }
 
+std::vector<HOTItem>::iterator HOTTree::begin() {
+  return items_.begin();
+}
+
+std::vector<HOTItem>::iterator HOTTree::end() {
+  return items_.end();
+}
 
 void HOTNodeComputeChildKeys(HOTNodeKey key, HOTNodeKey* child_keys) {
   HOTNodeKey first_child = key << 3;

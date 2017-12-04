@@ -115,6 +115,74 @@ TEST(HOTTree, CanInsertAFewItems) {
   EXPECT_LT(1, tree.Depth());
 }
 
+static HOTTree ConstructTreeWithRandomItems(HOTBoundingBox bbox, int n) {
+  assert(n > 0);
+  HOTTree tree(bbox);
+  auto entities = BuildEntitiesAtRandomLocations(bbox, n);
+  auto items = BuildItems(&entities);
+  tree.InsertItems(&items[0], &items[0] + n);
+  return std::move(tree);
+}
+
+static const HOTBoundingBox unit_cube({{0, 0, 0}, {1, 1, 1}});
+
+class CountVisits : public HOTTree::VertexVisitor {
+  public:
+    CountVisits() : count_{0} {}
+    ~CountVisits() override {}
+    bool Visit(HOTItem*) override {
+      ++count_;
+      return true;
+    }
+    void Reset() {
+      count_ = 0;
+    }
+    int count_;
+};
+
+TEST(HOTTree, VertexVisitsSelf) {
+  HOTTree tree = ConstructTreeWithRandomItems(unit_cube, 20);
+  HOTItem first_item = *tree.begin();
+  CountVisits counter;
+  tree.VisitNearVertices(&counter, first_item.position, 1.0e-16);
+  EXPECT_GT(counter.count_, 0);
+}
+
+TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
+  HOTTree tree = ConstructTreeWithRandomItems(unit_cube, 100);
+  double eps = 1.0e-10;
+  CountVisits counter;
+
+  std::vector<HOTItem> items(tree.begin(), tree.end());
+
+  // Along x
+  items[0].position = HOTPoint({0.5 - 0.5 * eps, 0.1, 0.1});
+  items[1].position = HOTPoint({0.5 - 0.5 * eps, 0.1, 0.1});
+  counter.Reset();
+  HOTTree treex(unit_cube);
+  treex.InsertItems(&items[0], &items[0] + items.size());
+  treex.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 1);
+
+  // Along y
+  items[0].position = HOTPoint({0.1, 0.5 - 0.5 * eps, 0.1});
+  items[1].position = HOTPoint({0.1, 0.5 + 0.49999 * eps, 0.1});
+  counter.Reset();
+  HOTTree treey(unit_cube);
+  treey.InsertItems(&items[0], &items[0] + items.size());
+  treey.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 1);
+
+  // Along z
+  items[0].position = HOTPoint({0.1, 0.1, 0.5 - 0.5 * eps});
+  items[1].position = HOTPoint({0.1, 0.1, 0.5 + 0.49999 * eps});
+  counter.Reset();
+  HOTTree treez(unit_cube);
+  treez.InsertItems(&items[0], &items[0] + items.size());
+  treez.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 1);
+}
+
 TEST(HOTNodeKey, ZeroIsNotValidNode) {
   EXPECT_FALSE(HOTNodeValidKey(0u));
 }

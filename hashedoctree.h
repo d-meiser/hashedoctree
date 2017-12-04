@@ -45,9 +45,23 @@ class HOTNode;
 class HOTTree {
   public:
     HOTTree(HOTBoundingBox bbox);
+    HOTTree(HOTTree&& other);
+    HOTTree& operator=(HOTTree&& rhs);
     ~HOTTree();
 
     void InsertItems(const HOTItem* begin, const HOTItem* end);
+
+    class VertexVisitor {
+      public:
+        virtual ~VertexVisitor() = default;
+        virtual bool Visit(HOTItem* item) = 0;
+    };
+    bool VisitNearVertices(VertexVisitor* visitor, HOTPoint position, double eps2);
+
+    std::vector<HOTItem>::iterator begin();
+    std::vector<HOTItem>::iterator end();
+
+    // Some diagnostics;
     int NumNodes() const;
     int Depth() const;
     void PrintNumItems() const;
