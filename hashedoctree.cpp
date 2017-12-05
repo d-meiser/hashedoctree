@@ -145,8 +145,10 @@ class HOTNode {
       for (int i = 0; i < 8; ++i) {
         if (children_[i]) {
           leaf = false;
-          if (!children_[i]->VisitNearVertices(visitor, position, eps)) {
-            return false;
+          if (LInfinity(children_[i]->bbox_, position) < eps) {
+            if (!children_[i]->VisitNearVertices(visitor, position, eps)) {
+              return false;
+            }
           }
         }
       }
