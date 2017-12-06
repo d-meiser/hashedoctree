@@ -1,8 +1,21 @@
 sudo: false
 language: cpp
+addons:
+  apt:
+    packages:
+    - lcov
+before_install:
+  - gem install coveralls-lcov
 script:
   - mkdir -p build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DHOT_ENABLE_COVERAGE=ON ..
   - make -j2
   - ctest --output-on-failure
+after_success:
+  - lcov -d tests -d src -base-directory .. -c -o coverage.info
+  - lcov --remove coverage.info '/usr/*' -o coverage.info
+  - lcov --remove coverage.info 'gtest*' -o coverage.info
+  - lcov --remove coverage.info 'tests/*' -o coverage.info
+  - cd ..
+  - coveralls-lcov build/coverage.info
