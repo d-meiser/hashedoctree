@@ -85,34 +85,7 @@ TEST(HOTTree, CanInsertAFewItems) {
   EXPECT_LT(1, tree.Depth());
 }
 
-static HOTTree ConstructTreeWithRandomItems(HOTBoundingBox bbox, int n) {
-  assert(n > 0);
-  HOTTree tree(bbox);
-  auto entities = BuildEntitiesAtRandomLocations(bbox, n);
-  auto items = BuildItems(&entities);
-  tree.InsertItems(&items[0], &items[0] + n);
-  return std::move(tree);
-}
 
-
-// Count visits of vertices excluding self.
-class CountVisits : public HOTTree::VertexVisitor {
-  public:
-    CountVisits(void* data) : count_{0}, data_{data} {}
-    ~CountVisits() override {}
-    bool Visit(HOTItem* item) override {
-      if (item->data != data_) {
-        ++count_;
-      }
-      return true;
-    }
-    void Reset() {
-      count_ = 0;
-    }
-
-    int count_;
-    void* data_;
-};
 
 TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), 100);

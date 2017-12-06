@@ -1,5 +1,6 @@
 #include <test_utilities.h>
 #include <random>
+#include <cassert>
 
 namespace {
 std::random_device rd;
@@ -32,5 +33,14 @@ std::vector<HOTItem> BuildItems(std::vector<Entity>* entities) {
 
 HOTBoundingBox unit_cube() {
   return HOTBoundingBox({{0, 0, 0}, {1, 1, 1}});
+}
+
+HOTTree ConstructTreeWithRandomItems(HOTBoundingBox bbox, int n) {
+  assert(n > 0);
+  HOTTree tree(bbox);
+  auto entities = BuildEntitiesAtRandomLocations(bbox, n);
+  auto items = BuildItems(&entities);
+  tree.InsertItems(&items[0], &items[0] + n);
+  return std::move(tree);
 }
 

@@ -6,3 +6,6 @@ add_executable(hashedoctree_test hashedoctree_test.cpp)
 target_link_libraries(hashedoctree_test hashedoctree test_utilities gtest_main ${COV_LIBRARIES})
 add_test(hashedoctree_test hashedoctree_test)
 
+add_executable(vertex_dedup_test vertex_dedup_test.cpp)
+target_link_libraries(vertex_dedup_test hashedoctree test_utilities)
+
