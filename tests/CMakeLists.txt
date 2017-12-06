@@ -1,4 +1,8 @@
+add_library(test_utilities test_utilities.cpp)
+target_include_directories(test_utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(test_utilities hashedoctree)
+
 add_executable(hashedoctree_test hashedoctree_test.cpp)
-target_link_libraries(hashedoctree_test hashedoctree gtest_main ${COV_LIBRARIES})
+target_link_libraries(hashedoctree_test hashedoctree test_utilities gtest_main ${COV_LIBRARIES})
 add_test(hashedoctree_test hashedoctree_test)
 
