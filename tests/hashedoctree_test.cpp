@@ -1,12 +1,10 @@
 #include <gtest/gtest.h>
 #include <hashedoctree.h>
+#include <test_utilities.h>
 #include <limits>
-#include <random>
 
 
 static double eps = std::numeric_limits<double>::epsilon();
-static std::random_device rd;
-static std::mt19937 gen(rd());
 
 
 TEST(ComputeHash, IsNullAtOrigin) {
@@ -38,34 +36,6 @@ TEST(ComputeHash, CanComputeKeysOutsideOfBBox) {
 
 TEST(HOTTree, Ctor) {
   EXPECT_NO_THROW(HOTTree({{0, 0, 0}, {1, 1, 1}}));
-}
-
-struct Entity {
-  HOTPoint position;
-  int id;
-};
-
-static std::vector<Entity> BuildEntitiesAtRandomLocations(
-    HOTBoundingBox bbox, int n) {
-  std::vector<Entity> entities;
-  entities.reserve(n);
-  std::uniform_real_distribution<> dist_x(bbox.min.x, bbox.max.x);
-  std::uniform_real_distribution<> dist_y(bbox.min.y, bbox.max.y);
-  std::uniform_real_distribution<> dist_z(bbox.min.z, bbox.max.z);
-  for (int i = 0; i < n; ++i) {
-    entities.emplace_back(Entity{{dist_x(gen), dist_y(gen), dist_z(gen)}, i});
-  }
-  return entities;
-}
-
-static std::vector<HOTItem> BuildItems(std::vector<Entity>* entities) {
-  std::vector<HOTItem> items;
-  int n = entities->size();
-  items.reserve(n);
-  for (int i = 0; i < n; ++i) {
-    items.push_back(HOTItem{(*entities)[i].position, &(*entities)[i]});
-  }
-  return items;
 }
 
 TEST(HOTTree, InsertItemsDoesntThrow) {
@@ -115,38 +85,10 @@ TEST(HOTTree, CanInsertAFewItems) {
   EXPECT_LT(1, tree.Depth());
 }
 
-static HOTTree ConstructTreeWithRandomItems(HOTBoundingBox bbox, int n) {
-  assert(n > 0);
-  HOTTree tree(bbox);
-  auto entities = BuildEntitiesAtRandomLocations(bbox, n);
-  auto items = BuildItems(&entities);
-  tree.InsertItems(&items[0], &items[0] + n);
-  return std::move(tree);
-}
 
-static const HOTBoundingBox unit_cube({{0, 0, 0}, {1, 1, 1}});
-
-// Count visits of vertices excluding self.
-class CountVisits : public HOTTree::VertexVisitor {
-  public:
-    CountVisits(void* data) : count_{0}, data_{data} {}
-    ~CountVisits() override {}
-    bool Visit(HOTItem* item) override {
-      if (item->data != data_) {
-        ++count_;
-      }
-      return true;
-    }
-    void Reset() {
-      count_ = 0;
-    }
-
-    int count_;
-    void* data_;
-};
 
 TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
-  HOTTree tree = ConstructTreeWithRandomItems(unit_cube, 100);
+  HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), 100);
   double eps = 1.0e-10;
 
   std::vector<HOTItem> items(tree.begin(), tree.end());
@@ -157,7 +99,7 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   items[0].position = HOTPoint({0.5 - 0.5 * eps, 0.1, 0.1});
   items[1].position = HOTPoint({0.5 - 0.5 * eps, 0.1, 0.1});
   counter.Reset();
-  HOTTree treex(unit_cube);
+  HOTTree treex(unit_cube());
   treex.InsertItems(&items[0], &items[0] + items.size());
   treex.VisitNearVertices(&counter, items[0].position, eps);
   EXPECT_GT(counter.count_, 0);
@@ -166,7 +108,7 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   items[0].position = HOTPoint({0.1, 0.5 - 0.5 * eps, 0.1});
   items[1].position = HOTPoint({0.1, 0.5 + 0.49999 * eps, 0.1});
   counter.Reset();
-  HOTTree treey(unit_cube);
+  HOTTree treey(unit_cube());
   treey.InsertItems(&items[0], &items[0] + items.size());
   treey.VisitNearVertices(&counter, items[0].position, eps);
   EXPECT_GT(counter.count_, 0);
@@ -175,7 +117,7 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   items[0].position = HOTPoint({0.1, 0.1, 0.5 - 0.5 * eps});
   items[1].position = HOTPoint({0.1, 0.1, 0.5 + 0.49999 * eps});
   counter.Reset();
-  HOTTree treez(unit_cube);
+  HOTTree treez(unit_cube());
   treez.InsertItems(&items[0], &items[0] + items.size());
   treez.VisitNearVertices(&counter, items[0].position, eps);
   EXPECT_GT(counter.count_, 0);
@@ -183,7 +125,7 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
 
 TEST(HOTTree, VisitEachVerticesNeighbours) {
   int n = 1000;
-  HOTTree tree = ConstructTreeWithRandomItems(unit_cube, n);
+  HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), n);
   double eps = 1.0e-3;
   CountVisits counter(nullptr);
   auto item = tree.begin();
@@ -234,3 +176,4 @@ TEST(HOTNodeKey, BeginSpotChecks) {
   EXPECT_EQ(1u << (3 * 8), HOTNodeBegin(65u));
   EXPECT_EQ(10u << (3 * 8), HOTNodeBegin(74u));
 }
+
