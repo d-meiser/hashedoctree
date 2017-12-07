@@ -2,6 +2,7 @@
 #define TEST_UTILITIES_H
 
 #include <hashedoctree.h>
+#include <stdint.h>
 
 
 struct Entity {
@@ -32,5 +33,6 @@ std::vector<Entity> BuildEntitiesAtRandomLocations(HOTBoundingBox bbox, int n);
 std::vector<HOTItem> BuildItems(std::vector<Entity>* entities);
 HOTBoundingBox unit_cube();
 HOTTree ConstructTreeWithRandomItems(HOTBoundingBox bbox, int n);
+uint64_t rdtsc();
 
 #endif
