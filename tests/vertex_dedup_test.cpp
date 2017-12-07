@@ -16,11 +16,33 @@ void VertexDedup(HOTTree* tree);
 int main(int argn, char **argv) {
   Configuration conf = parse_command_line(argn, argv);
 
-  HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), conf.n);
-  VertexDedup(&tree);
+  std::cout << "{\n";
+  std::cout << "\"num_vertices\": " << conf.n << ",\n";
 
+  std::cout << "\"timings\":\n{\n";
+
+  uint64_t start, end;
+  start = rdtsc();
+  HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), conf.n);
+  end = rdtsc();
+  std::cout << "\"ConstructTreeWithRandomItems\": " << (end - start) / 1.0e6 << ",\n";
+
+  start = rdtsc();
+  VertexDedup(&tree);
+  end = rdtsc();
+  std::cout << "\"VertexDedup1\": " << (end - start) / 1.0e6 << ",\n";
+
+  start = rdtsc();
   HOTTree tree2 = BuildTreeFromOrderedItems(unit_cube(), &*tree.begin(), &*tree.end());
+  end = rdtsc();
+  std::cout << "\"BuildTreeFromOrderedItems\": " << (end - start) / 1.0e6 << ",\n";
+
+  start = rdtsc();
   VertexDedup(&tree2);
+  end = rdtsc();
+  std::cout << "\"VertexDedup2\": " << (end - start) / 1.0e6 << "\n";
+
+  std::cout << "}\n}" << std::endl;
 }
 
 HOTTree BuildTreeFromOrderedItems(HOTBoundingBox bbox, const HOTItem* begin, const HOTItem* end) {
