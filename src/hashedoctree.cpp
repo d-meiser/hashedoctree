@@ -47,20 +47,25 @@ static double LInfinity(const HOTPoint& p0, const HOTPoint& p1) {
   return dist;
 }
 
+static uint32_t Part1By2_32(uint32_t a) {
+  a &= 0x000003ff;                  // a = ---- ---- ---- ---- ---- --98 7654 3210
+  a = (a ^ (a << 16)) & 0xff0000ff; // a = ---- --98 ---- ---- ---- ---- 7654 3210
+  a = (a ^ (a <<  8)) & 0x0300f00f; // a = ---- --98 ---- ---- 7654 ---- ---- 3210
+  a = (a ^ (a <<  4)) & 0x030c30c3; // a = ---- --98 ---- 76-- --54 ---- 32-- --10
+  a = (a ^ (a <<  2)) & 0x09249249; // a = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+  return a;
+}
+
+static uint32_t MortonEncode_32(uint32_t a, uint32_t b, uint32_t c) {
+  return Part1By2_32(a) + (Part1By2_32(b) << 1) + (Part1By2_32(c) << 2);
+}
 
 HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point) {
-  HOTKey buckets[3] = {0};
-  buckets[0] = ComputeBucket(bbox.min.x, bbox.max.x, point.x, NUM_LEAF_BUCKETS);
-  buckets[1] = ComputeBucket(bbox.min.y, bbox.max.y, point.y, NUM_LEAF_BUCKETS);
-  buckets[2] = ComputeBucket(bbox.min.z, bbox.max.z, point.z, NUM_LEAF_BUCKETS);
-  HOTKey key = 0;
-  for (int i = 0; i < 3; ++i) {
-    for (int b = 0; b < BITS_PER_DIM; ++b) {
-      uint32_t mask = 1u << b;
-      key |= ((uint32_t)((buckets[i] & mask) == mask)) << (3 * b + i);
-    }
-  }
-  return key;
+  HOTKey a, b, c;
+  a = ComputeBucket(bbox.min.x, bbox.max.x, point.x, NUM_LEAF_BUCKETS);
+  b = ComputeBucket(bbox.min.y, bbox.max.y, point.y, NUM_LEAF_BUCKETS);
+  c = ComputeBucket(bbox.min.z, bbox.max.z, point.z, NUM_LEAF_BUCKETS);
+  return MortonEncode_32(a, b, c);
 }
 
 static std::vector<HOTKey> HOTComputeItemKeys(HOTBoundingBox bbox,
