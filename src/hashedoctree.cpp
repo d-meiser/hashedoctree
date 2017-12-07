@@ -60,6 +60,23 @@ static uint32_t MortonEncode_32(uint32_t a, uint32_t b, uint32_t c) {
   return Part1By2_32(a) + (Part1By2_32(b) << 1) + (Part1By2_32(c) << 2);
 }
 
+#if defined(USE_64BIT_KEYS)
+// Define these only for 64 bit keys to avoid unused static function warning.
+static uint64_t Part1By2_64(uint32_t x) {
+  uint64_t a = x & 0x1fffff; 
+  a = (a | a << 32) & 0x1f00000000ffff;
+  a = (a | a << 16) & 0x1f0000ff0000ff;
+  a = (a | a << 8) & 0x100f00f00f00f00f;
+  a = (a | a << 4) & 0x10c30c30c30c30c3;
+  a = (a | a << 2) & 0x1249249249249249;
+  return a;
+}
+
+static uint64_t MortonEncode_64(uint32_t a, uint32_t b, uint32_t c) {
+  return Part1By2_64(a) + (Part1By2_64(b) << 1) + (Part1By2_64(c) << 2);
+}
+#endif
+
 HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point) {
   HOTKey a, b, c;
   a = ComputeBucket(bbox.min.x, bbox.max.x, point.x, NUM_LEAF_BUCKETS);
