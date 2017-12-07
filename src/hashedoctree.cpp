@@ -142,6 +142,8 @@ class HOTNode {
         // Build the octants.
         HOTNodeKey child_keys[8];
         HOTNodeComputeChildKeys(key_, child_keys);
+        // TODO: This should be optimized. We really need just 7 bisections.
+        // We're doing 16 bisection searches.
         for (int octant = 0; octant < 8; ++octant) {
           const HOTKey* begin = std::lower_bound(
               key_begin_, key_end_, HOTNodeBegin(child_keys[octant]));
