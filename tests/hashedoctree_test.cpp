@@ -123,6 +123,47 @@ TEST(HOTTree, VertexInNeighbouringNodeIsVisited) {
   EXPECT_GT(counter.count_, 0);
 }
 
+TEST(HOTTree, DuplicatesAreVisited) {
+  std::vector<Entity> entities = BuildEntitiesAtRandomLocations(unit_cube(), 100);
+  std::vector<HOTItem> items(BuildItems(&entities));
+  items[4].position = items[0].position;
+  items[11].position = items[0].position;
+  items[13].position = items[3].position;
+  HOTTree tree(unit_cube());
+  RecordIdsVisitor visitor;
+  tree.InsertItems(&items[0], &items[0] + 100);
+  tree.VisitNearVertices(&visitor, items[0].position, 1.0e-10);
+  EXPECT_TRUE(visitor.EntityVisited(entities[0].id));
+  EXPECT_TRUE(visitor.EntityVisited(entities[4].id));
+  EXPECT_TRUE(visitor.EntityVisited(entities[11].id));
+  EXPECT_FALSE(visitor.EntityVisited(entities[13].id));
+}
+
+TEST(HOTTree, EightCornerVerticesAreAllVisited) {
+  double eps = 1.0e-10;
+  std::vector<Entity> entities = BuildEntitiesAtRandomLocations(unit_cube(), 100);
+  std::vector<HOTItem> items(BuildItems(&entities));
+  int m = 0;
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      for (int k = 0; k < 2; ++k) {
+        items[m].position = HOTPoint({
+          0.5 + 0.1 * (i - 0.5) * eps,
+          0.5 + 0.1 * (j - 0.5) * eps,
+          0.5 + 0.1 * (j - 0.5) * eps});
+        ++m;
+      }
+    }
+  }
+  HOTTree tree(unit_cube());
+  RecordIdsVisitor visitor;
+  tree.InsertItems(&items[0], &items[0] + 100);
+  tree.VisitNearVertices(&visitor, items[0].position, eps);
+  for (int i = 0; i < 8; ++i) {
+    EXPECT_TRUE(visitor.EntityVisited(entities[i].id)) << i;
+  }
+}
+
 TEST(HOTTree, VisitEachVerticesNeighbours) {
   int n = 1000;
   HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), n);
