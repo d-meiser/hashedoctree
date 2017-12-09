@@ -3,6 +3,7 @@
 
 #include <hashedoctree.h>
 #include <stdint.h>
+#include <set>
 
 
 struct Entity {
@@ -27,6 +28,24 @@ class CountVisits : public HOTTree::VertexVisitor {
 
     int count_;
     void* data_;
+};
+
+// Record ids of visited of vertices.
+class RecordIdsVisitor : public HOTTree::VertexVisitor {
+  public:
+    bool Visit(HOTItem* item) override {
+      Entity *entity = static_cast<Entity*>(item->data);
+      if (entity) {
+        ids.insert(entity->id);
+      }
+      return true;
+    }
+
+    bool EntityVisited(int id) const {
+      return ids.find(id) != ids.end();
+    }
+
+    std::set<int> ids;
 };
 
 std::vector<Entity> BuildEntitiesAtRandomLocations(HOTBoundingBox bbox, int n);
