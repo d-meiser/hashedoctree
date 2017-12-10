@@ -1,0 +1,40 @@
+{
+  "num_vertices": 1000000,
+  "num_iter": 3,
+  "iteration 0": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 1.42295e+03,
+      "VertexDedup1":                 1.50819e+03,
+      "BuildTreeFromOrderedItems":    5.33646e+02,
+      "VertexDedup2":                 2.07281e+03
+    }
+  },
+  "iteration 1": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 1.47657e+03,
+      "VertexDedup1":                 1.52546e+03,
+      "BuildTreeFromOrderedItems":    4.09439e+02,
+      "VertexDedup2":                 1.54478e+03
+    }
+  },
+  "iteration 2": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 1.50970e+03,
+      "VertexDedup1":                 1.53612e+03,
+      "BuildTreeFromOrderedItems":    4.10869e+02,
+      "VertexDedup2":                 1.56475e+03
+    }
+  },
+  "totals": {
+    "ConstructTreeWithRandomItems":   4.40922e+03,
+    "VertexDedup1":                   4.56977e+03,
+    "BuildTreeFromOrderedItems":      1.35395e+03,
+    "VertexDedup2":                   5.18234e+03
+  },
+  "averages": {
+    "ConstructTreeWithRandomItems":   1.46974e+03,
+    "VertexDedup1":                   1.52326e+03,
+    "BuildTreeFromOrderedItems":      4.51318e+02,
+    "VertexDedup2":                   1.72745e+03
+  }
+}

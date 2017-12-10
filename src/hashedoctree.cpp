@@ -6,6 +6,10 @@
 #include <numeric>
 
 
+static void HOTNodeComputePartitionPointers(
+    const HOTKey* key_begin, const HOTKey* key_end, const HOTNodeKey* child_keys,
+    const HOTKey** partition_ptrs);
+
 // We use 32 bit keys. That is large enough for 2**10 buckets
 // along each dimension.
 static const int BITS_PER_DIM = 10;
@@ -127,6 +131,12 @@ HOTBoundingBox ComputeChildBox(HOTBoundingBox bbox, int octant) {
       });
 }
 
+// Convert a triple of binary digits into an integer.
+// i, j, and k should be either 0 or 1.
+static int from_binary_digits(int i, int j, int k) {
+  return (i << 2) + (j << 1) + (k << 0);
+}
+
 class HOTNode {
   public:
     HOTNode(HOTNodeKey key, HOTBoundingBox bbox, const HOTKey* key_begin, const
@@ -142,11 +152,11 @@ class HOTNode {
         // Build the octants.
         HOTNodeKey child_keys[8];
         HOTNodeComputeChildKeys(key_, child_keys);
+        const HOTKey* partition_ptrs[9];
+        HOTNodeComputePartitionPointers(key_begin, key_end, child_keys, partition_ptrs);
         for (int octant = 0; octant < 8; ++octant) {
-          const HOTKey* begin = std::lower_bound(
-              key_begin_, key_end_, HOTNodeBegin(child_keys[octant]));
-          const HOTKey* end = std::lower_bound(
-              key_begin_, key_end_, HOTNodeEnd(child_keys[octant]));
+          const HOTKey* begin = partition_ptrs[octant];
+          const HOTKey* end = partition_ptrs[octant + 1];
           int num_child_items = std::distance(begin, end);
           if (num_child_items > 0) {
             children_[octant].reset(
@@ -342,6 +352,42 @@ void HOTNodeComputeChildKeys(HOTNodeKey key, HOTNodeKey* child_keys) {
   for (int i = 0; i < 8; ++i) {
     child_keys[i] = first_child + i;
   }
+}
+
+void HOTNodeComputePartitionPointers(
+    const HOTKey* key_begin, const HOTKey* key_end, const HOTNodeKey* child_keys,
+    const HOTKey** partition_ptrs) {
+  partition_ptrs[0] = key_begin;
+  partition_ptrs[8] = key_end;
+  int partition_index;
+  partition_index = from_binary_digits(1, 0, 0);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[0], partition_ptrs[8],
+        HOTNodeBegin(child_keys[partition_index]));
+  partition_index = from_binary_digits(0, 1, 0);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[0], partition_ptrs[4],
+        HOTNodeBegin(child_keys[partition_index]));
+  partition_index = from_binary_digits(1, 1, 0);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[4], partition_ptrs[8],
+        HOTNodeBegin(child_keys[partition_index]));
+  partition_index = from_binary_digits(0, 0, 1);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[0], partition_ptrs[2],
+        HOTNodeBegin(child_keys[partition_index]));
+  partition_index = from_binary_digits(0, 1, 1);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[2], partition_ptrs[4],
+        HOTNodeBegin(child_keys[partition_index]));
+  partition_index = from_binary_digits(1, 0, 1);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[4], partition_ptrs[6],
+        HOTNodeBegin(child_keys[partition_index]));
+  partition_index = from_binary_digits(1, 1, 1);
+  partition_ptrs[partition_index] =
+    std::lower_bound(partition_ptrs[6], partition_ptrs[8],
+        HOTNodeBegin(child_keys[partition_index]));
 }
 
 HOTNodeKey HOTNodeRoot() {
