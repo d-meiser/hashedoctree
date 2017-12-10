@@ -12,6 +12,7 @@ script:
   - cmake -DCMAKE_BUILD_TYPE=Debug -DHOT_ENABLE_COVERAGE=ON ..
   - make -j2
   - ctest --output-on-failure
+  - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000
 after_success:
   - lcov -d tests -d src -base-directory .. -c -o coverage.info
   - lcov --remove coverage.info '/usr/*' -o coverage.info
