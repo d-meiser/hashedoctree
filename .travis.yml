@@ -9,10 +9,16 @@ before_install:
 script:
   - mkdir -p build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DHOT_ENABLE_COVERAGE=ON ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DHOT_ENABLE_COVERAGE=ON -DBUILD_GMOCK=OFF -DBUILD_GTEST=ON ..
   - make -j2
   - ctest --output-on-failure
+  - cd ..
+  - mkdir -p build-release
+  - cd build-release
+  - cmake -DCMAKE_BUILD_TYPE=Release -DHOT_ENABLE_COVERAGE=OFF -DBUILD_GMOCK=OFF -DCMAKE_CXX_FLAGS='-ffast-math -march-native -O3 -DNDEBUG -std=c++11' -DBUILD_GTEST=OFF ..
+  - make vertex_dedup_test
   - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000
+  - cd ../build
 after_success:
   - lcov -d tests -d src -base-directory .. -c -o coverage.info
   - lcov --remove coverage.info '/usr/*' -o coverage.info
