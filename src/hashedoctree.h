@@ -21,7 +21,7 @@ struct HOTBoundingBox {
 
 typedef uint32_t HOTKey;
 
-// Node keys are similar to the 
+// Node keys are similar to the vertex keys.
 typedef uint32_t HOTNodeKey;
 HOTNodeKey HOTNodeRoot();
 void HOTNodeComputeChildKeys(HOTNodeKey key, HOTNodeKey* child_keys);
