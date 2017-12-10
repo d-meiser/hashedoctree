@@ -15,7 +15,7 @@ script:
   - cd ..
   - mkdir -p build-release
   - cd build-release
-  - cmake -DCMAKE_BUILD_TYPE=Release -DHOT_ENABLE_COVERAGE=OFF -DBUILD_GMOCK=OFF -DCMAKE_CXX_FLAGS='-ffast-math -march-native -O3 -DNDEBUG -std=c++11' -DBUILD_GTEST=OFF ..
+  - cmake -DCMAKE_BUILD_TYPE=Release -DHOT_ENABLE_COVERAGE=OFF -DBUILD_GMOCK=OFF -DCMAKE_CXX_FLAGS='-ffast-math -march=native -O3 -DNDEBUG -std=c++11' -DBUILD_GTEST=OFF ..
   - make vertex_dedup_test
   - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000
   - cd ../build
