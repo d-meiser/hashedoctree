@@ -51,6 +51,23 @@ static double LInfinity(const HOTPoint& p0, const HOTPoint& p1) {
   return dist;
 }
 
+static double DistanceFromEdgesOfInterval(double a, double b, double x) {
+  assert(b >= a);
+  double dist = std::numeric_limits<double>::max();
+  dist = std::min(dist, std::abs(a - x));
+  dist = std::min(dist, std::abs(b - x));
+  return dist;
+}
+
+static double DistanceFromBoundary(const HOTBoundingBox& bbox, const HOTPoint& point) {
+  double dist = std::numeric_limits<double>::max();
+  dist = std::min(dist, DistanceFromEdgesOfInterval(bbox.min.x, bbox.max.x, point.x));
+  dist = std::min(dist, DistanceFromEdgesOfInterval(bbox.min.y, bbox.max.y, point.y));
+  dist = std::min(dist, DistanceFromEdgesOfInterval(bbox.min.z, bbox.max.z, point.z));
+  return dist;
+}
+
+
 static uint32_t Part1By2_32(uint32_t a) {
   a &= 0x000003ff;                  // a = ---- ---- ---- ---- ---- --98 7654 3210
   a = (a ^ (a << 16)) & 0xff0000ff; // a = ---- --98 ---- ---- ---- ---- 7654 3210
@@ -171,14 +188,28 @@ class HOTNode {
     }
 
     bool VisitNearVertices(
-        HOTTree::VertexVisitor* visitor, HOTPoint position, double eps) {
-      if (LInfinity(bbox_, position) >= eps) return true;
+        HOTTree::VertexVisitor* visitor,
+        HOTKey visitor_key,
+        HOTPoint visitor_position,
+        double eps) {
+      int my_level = HOTNodeLevel(key_);
+      int visitor_octant = (visitor_key >> (3 * (BITS_PER_DIM - (my_level + 1)))) & 0x07u;
+      HOTNode* selected_child = children_[visitor_octant].get();
+      if (selected_child &&
+          DistanceFromBoundary(selected_child->bbox_, visitor_position) > eps) {
+        // Most common case: We need to recurse and the item is not near the
+        // surface of the child node.
+        return selected_child->VisitNearVertices(
+            visitor, visitor_key, visitor_position, eps);
+      }
+      // Otherwise this is either a leaf node or we are near the boundary.
       bool leaf = true;
       for (int i = 0; i < 8; ++i) {
         if (children_[i]) {
           leaf = false;
-          if (LInfinity(children_[i]->bbox_, position) < eps) {
-            if (!children_[i]->VisitNearVertices(visitor, position, eps)) {
+          if (LInfinity(children_[i]->bbox_, visitor_position) < eps) {
+            if (!children_[i]->VisitNearVertices(
+                  visitor, visitor_key, visitor_position, eps)) {
               return false;
             }
           }
@@ -187,7 +218,7 @@ class HOTNode {
       if (!leaf) return true;
       int n = std::distance(key_begin_, key_end_);
       for (int i = 0; i < n; ++i) {
-        if (LInfinity(items_begin_[i].position, position) < eps) {
+        if (LInfinity(items_begin_[i].position, visitor_position) < eps) {
            bool cont = visitor->Visit(&items_begin_[i]);
            if (!cont) return false;
         }
@@ -294,7 +325,10 @@ void HOTTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
 bool HOTTree::VisitNearVertices(
     VertexVisitor* visitor, HOTPoint position, double eps) {
   if (root_) {
-    return root_->VisitNearVertices(visitor, position, eps);
+    HOTKey visitor_key = HOTComputeHash(bbox_, position);
+    if (LInfinity(bbox_, position) < eps) {
+      return root_->VisitNearVertices(visitor, visitor_key, position, eps);
+    }
   }
   return true;
 }
