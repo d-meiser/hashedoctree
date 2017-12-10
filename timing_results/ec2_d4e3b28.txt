@@ -1,0 +1,96 @@
+{
+  "num_vertices": 1000000,
+  "num_iter": 10,
+  "iteration 0": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.77664e+02,
+      "VertexDedup1":                 8.79013e+02,
+      "BuildTreeFromOrderedItems":    2.56327e+02,
+      "VertexDedup2":                 8.88778e+02
+    }
+  },
+  "iteration 1": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.50026e+02,
+      "VertexDedup1":                 8.81367e+02,
+      "BuildTreeFromOrderedItems":    2.13030e+02,
+      "VertexDedup2":                 8.74700e+02
+    }
+  },
+  "iteration 2": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.52826e+02,
+      "VertexDedup1":                 8.92440e+02,
+      "BuildTreeFromOrderedItems":    2.15360e+02,
+      "VertexDedup2":                 8.80788e+02
+    }
+  },
+  "iteration 3": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.63181e+02,
+      "VertexDedup1":                 8.85603e+02,
+      "BuildTreeFromOrderedItems":    2.16164e+02,
+      "VertexDedup2":                 8.84752e+02
+    }
+  },
+  "iteration 4": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.64537e+02,
+      "VertexDedup1":                 8.81842e+02,
+      "BuildTreeFromOrderedItems":    2.16281e+02,
+      "VertexDedup2":                 8.81417e+02
+    }
+  },
+  "iteration 5": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.62978e+02,
+      "VertexDedup1":                 8.86202e+02,
+      "BuildTreeFromOrderedItems":    2.13220e+02,
+      "VertexDedup2":                 8.82483e+02
+    }
+  },
+  "iteration 6": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.64821e+02,
+      "VertexDedup1":                 8.82077e+02,
+      "BuildTreeFromOrderedItems":    2.16023e+02,
+      "VertexDedup2":                 8.81949e+02
+    }
+  },
+  "iteration 7": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.61495e+02,
+      "VertexDedup1":                 8.85807e+02,
+      "BuildTreeFromOrderedItems":    2.13482e+02,
+      "VertexDedup2":                 8.71786e+02
+    }
+  },
+  "iteration 8": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.60694e+02,
+      "VertexDedup1":                 8.78469e+02,
+      "BuildTreeFromOrderedItems":    2.16243e+02,
+      "VertexDedup2":                 8.84310e+02
+    }
+  },
+  "iteration 9": {
+    "timings": {
+      "ConstructTreeWithRandomItems": 6.63430e+02,
+      "VertexDedup1":                 8.84273e+02,
+      "BuildTreeFromOrderedItems":    2.16266e+02,
+      "VertexDedup2":                 8.83642e+02
+    }
+  },
+  "totals": {
+    "ConstructTreeWithRandomItems":   6.62165e+03,
+    "VertexDedup1":                   8.83709e+03,
+    "BuildTreeFromOrderedItems":      2.19240e+03,
+    "VertexDedup2":                   8.81461e+03
+  },
+  "averages": {
+    "ConstructTreeWithRandomItems":   6.62165e+02,
+    "VertexDedup1":                   8.83709e+02,
+    "BuildTreeFromOrderedItems":      2.19240e+02,
+    "VertexDedup2":                   8.81461e+02
+  }
+}
