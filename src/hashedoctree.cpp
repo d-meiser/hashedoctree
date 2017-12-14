@@ -111,14 +111,13 @@ static std::vector<HOTKey> HOTComputeItemKeys(HOTBoundingBox bbox,
     const HOTItem* begin, const HOTItem* end) {
   int n = std::distance(begin, end);
   std::vector<HOTKey> keys(n);
-  tbb::parallel_for(0, n,
-      [&](int i) { keys[i] = HOTComputeHash(bbox, begin[i].position); },
+  tbb::parallel_for(tbb::blocked_range<int>(0, n, 1<<10),
+      [&](const tbb::blocked_range<int>& range) {
+          for (int i = range.begin(); i != range.end(); ++i) {
+            keys[i] = HOTComputeHash(bbox, begin[i].position);
+          }
+        },
       tbb::static_partitioner());
-  /*
-  for (int i = 0; i < n; ++i) {
-    keys[i] = HOTComputeHash(bbox, begin[i].position);
-  }
-  */
   return keys;
 }
 
