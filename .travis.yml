@@ -4,6 +4,9 @@ addons:
   apt:
     packages:
     - lcov
+cache:
+  directories:
+  - tbb-2018_U2 
 before_install:
   - gem install coveralls-lcov
   - source utilities/get_tbb.sh

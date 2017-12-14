@@ -134,8 +134,13 @@ static std::vector<T> permute(const std::vector<int>& permutation,
     const std::vector<T>& v) {
   assert(permutation.size() == v.size());
   std::vector<T> permuted_v(v.size());
-  std::transform(permutation.begin(), permutation.end(), permuted_v.begin(),
-      [&](int i) { return v[i]; });
+  tbb::parallel_for(tbb::blocked_range<int>(0, v.size(), 1<<10),
+      [&](const tbb::blocked_range<int>& range) {
+          for (int i = range.begin(); i != range.end(); ++i) {
+            permuted_v[i] = v[permutation[i]];
+          }
+        },
+      tbb::static_partitioner());
   return permuted_v;
 }
 
