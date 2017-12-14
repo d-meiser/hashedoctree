@@ -7,5 +7,5 @@ target_link_libraries(hashedoctree_test hashedoctree test_utilities gtest_main $
 add_test(hashedoctree_test hashedoctree_test)
 
 add_executable(vertex_dedup_test vertex_dedup_test.cpp)
-target_link_libraries(vertex_dedup_test hashedoctree test_utilities)
+target_link_libraries(vertex_dedup_test hashedoctree test_utilities tbb)
 

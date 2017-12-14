@@ -18,5 +18,6 @@ if (HOT_ENABLE_COVERAGE)
 endif ()
 
 add_subdirectory(googletest-release-1.8.0)
+find_package(TBB REQUIRED)
 add_subdirectory(src)
 add_subdirectory(tests)
