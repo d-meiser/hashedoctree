@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <tbb/parallel_sort.h>
 
 
 static void HOTNodeComputePartitionPointers(
@@ -110,16 +111,21 @@ static std::vector<HOTKey> HOTComputeItemKeys(HOTBoundingBox bbox,
     const HOTItem* begin, const HOTItem* end) {
   int n = std::distance(begin, end);
   std::vector<HOTKey> keys(n);
+  tbb::parallel_for(0, n,
+      [&](int i) { keys[i] = HOTComputeHash(bbox, begin[i].position); },
+      tbb::static_partitioner());
+  /*
   for (int i = 0; i < n; ++i) {
     keys[i] = HOTComputeHash(bbox, begin[i].position);
   }
+  */
   return keys;
 }
 
 static std::vector<int> find_sort_permutation(const std::vector<HOTKey>& keys) {
   std::vector<int> p(keys.size());
   std::iota(p.begin(), p.end(), 0);
-  std::sort(p.begin(), p.end(),
+  tbb::parallel_sort(p.begin(), p.end(),
       [&](int i, int j) { return keys[i] < keys[j] ; });
   return p;
 }
