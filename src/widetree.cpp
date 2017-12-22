@@ -29,18 +29,15 @@ uint8_t ComputeWideKey(HOTBoundingBox bbox, HOTPoint point) {
   return (a << 5) + (b << 2) + (c << 0);
 }
 
-void SortByKey(
-    const uint8_t* key_begin, const uint8_t* key_end,
-    const int* perm_in,
-    int* perm_out) {
+void SortByKey(const uint8_t* keys, int n, int* perm) {
   int buckets[256] = {0};
-  for (const uint8_t* k = key_begin; k != key_end; ++k) {
-    ++buckets[*k];
+  for (int i = 0; i < n; ++i) {
+    ++buckets[keys[i]];
   }
   for (int i = 1; i < 256; ++i) {
     buckets[i] += buckets[i - 1];
   }
-  for (const uint8_t* k = key_begin; k != key_end; ++k, ++perm_in) {
-    perm_out[--buckets[*k]] = *perm_in;
+  for (int i = 0; i < n; ++i) {
+    perm[--buckets[keys[i]]] = i;
   }
 }
