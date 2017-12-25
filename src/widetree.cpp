@@ -10,7 +10,6 @@ static uint8_t ComputeBucket(double min, double max, double pos, int num_buckets
     folded_pos += max - min;
   }
   uint8_t bucket = num_buckets * folded_pos / (max - min);
-  assert(bucket >= 0);
   assert(bucket < num_buckets);
   return bucket;
 }
@@ -18,13 +17,10 @@ static uint8_t ComputeBucket(double min, double max, double pos, int num_buckets
 uint8_t ComputeWideKey(const HOTBoundingBox& bbox, HOTPoint point) {
   uint8_t a, b, c;
   a = ComputeBucket(bbox.min.x, bbox.max.x, point.x, 8);
-  assert(a >= 0);
   assert(a < 8);
   b = ComputeBucket(bbox.min.y, bbox.max.y, point.y, 8);
-  assert(b >= 0);
   assert(b < 8);
   c = ComputeBucket(bbox.min.z, bbox.max.z, point.z, 4);
-  assert(c >= 0);
   assert(c < 4);
   return (a << 5) + (b << 2) + (c << 0);
 }
