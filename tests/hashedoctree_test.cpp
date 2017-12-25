@@ -3,6 +3,11 @@
 #include <test_utilities.h>
 #include <limits>
 
+#include <hot_config.h>
+#ifdef HOT_HAVE_TBB
+#include <tbb/task_scheduler_init.h>
+#endif
+
 
 static double eps = std::numeric_limits<double>::epsilon();
 
@@ -218,3 +223,15 @@ TEST(HOTNodeKey, BeginSpotChecks) {
   EXPECT_EQ(10u << (3 * 8), HOTNodeBegin(74u));
 }
 
+
+int main(int argn, char **argv) {
+  ::testing::InitGoogleTest(&argn, argv);
+#ifdef HOT_HAVE_TBB
+  tbb::task_scheduler_init scheduler(2);
+#endif
+  int result = RUN_ALL_TESTS();
+#ifdef HOT_HAVE_TBB
+  scheduler.terminate();
+#endif
+  return result;
+}

@@ -21,3 +21,8 @@ add_subdirectory(googletest-release-1.8.0)
 find_package(TBB REQUIRED)
 add_subdirectory(src)
 add_subdirectory(tests)
+
+if (TBB_FOUND)
+  set(HOT_HAVE_TBB ON)
+endif ()
+configure_file(hot_config.h.in hot_config.h)
