@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <tbb/parallel_sort.h>
 
 
 static void HOTNodeComputePartitionPointers(
@@ -110,16 +111,20 @@ static std::vector<HOTKey> HOTComputeItemKeys(HOTBoundingBox bbox,
     const HOTItem* begin, const HOTItem* end) {
   int n = std::distance(begin, end);
   std::vector<HOTKey> keys(n);
-  for (int i = 0; i < n; ++i) {
-    keys[i] = HOTComputeHash(bbox, begin[i].position);
-  }
+  tbb::parallel_for(tbb::blocked_range<int>(0, n, 1<<10),
+      [&](const tbb::blocked_range<int>& range) {
+          for (int i = range.begin(); i != range.end(); ++i) {
+            keys[i] = HOTComputeHash(bbox, begin[i].position);
+          }
+        },
+      tbb::static_partitioner());
   return keys;
 }
 
 static std::vector<int> find_sort_permutation(const std::vector<HOTKey>& keys) {
   std::vector<int> p(keys.size());
   std::iota(p.begin(), p.end(), 0);
-  std::sort(p.begin(), p.end(),
+  tbb::parallel_sort(p.begin(), p.end(),
       [&](int i, int j) { return keys[i] < keys[j] ; });
   return p;
 }
@@ -129,8 +134,13 @@ static std::vector<T> permute(const std::vector<int>& permutation,
     const std::vector<T>& v) {
   assert(permutation.size() == v.size());
   std::vector<T> permuted_v(v.size());
-  std::transform(permutation.begin(), permutation.end(), permuted_v.begin(),
-      [&](int i) { return v[i]; });
+  tbb::parallel_for(tbb::blocked_range<int>(0, v.size(), 1<<10),
+      [&](const tbb::blocked_range<int>& range) {
+          for (int i = range.begin(); i != range.end(); ++i) {
+            permuted_v[i] = v[permutation[i]];
+          }
+        },
+      tbb::static_partitioner());
   return permuted_v;
 }
 

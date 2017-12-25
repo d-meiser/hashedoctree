@@ -4,6 +4,9 @@ enable_testing()
 
 option(HOT_ENABLE_COVERAGE "Instrument tests for coverage" OFF)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 
@@ -15,5 +18,6 @@ if (HOT_ENABLE_COVERAGE)
 endif ()
 
 add_subdirectory(googletest-release-1.8.0)
+find_package(TBB REQUIRED)
 add_subdirectory(src)
 add_subdirectory(tests)

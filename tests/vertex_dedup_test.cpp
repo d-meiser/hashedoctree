@@ -2,6 +2,7 @@
 #include <test_utilities.h>
 #include <string>
 #include <iostream>
+#include <tbb/parallel_for.h>
 
 
 struct Configuration {
@@ -14,11 +15,13 @@ struct TimingResults {
   double VertexDedup1;
   double BuildTreeFromOrderedItems;
   double VertexDedup2;
+  double ParallelVertexDedup;
 };
 
 Configuration parse_command_line(int argn, char **argv);
 HOTTree BuildTreeFromOrderedItems(HOTBoundingBox bbox, const HOTItem* begin, const HOTItem* end);
 void VertexDedup(HOTTree* tree);
+void ParallelVertexDedup(HOTTree* tree);
 
 
 int main(int argn, char **argv) {
@@ -63,6 +66,12 @@ int main(int argn, char **argv) {
     std::cout << "      \"VertexDedup2\":                 " << (end - start) / 1.0e6 << "\n";
     results.VertexDedup2 += (end - start) / 1.0e6;
 
+    start = rdtsc();
+    ParallelVertexDedup(&tree2);
+    end = rdtsc();
+    std::cout << "      \"ParallelVertexDedup\":          " << (end - start) / 1.0e6 << "\n";
+    results.ParallelVertexDedup += (end - start) / 1.0e6;
+
     std::cout << "    }\n  }," << std::endl;
   }
 
@@ -71,6 +80,7 @@ int main(int argn, char **argv) {
   std::cout << "    \"VertexDedup1\":                   " << results.VertexDedup1 << ",\n";
   std::cout << "    \"BuildTreeFromOrderedItems\":      " << results.BuildTreeFromOrderedItems << ",\n";
   std::cout << "    \"VertexDedup2\":                   " << results.VertexDedup2 << "\n";
+  std::cout << "    \"ParallelVertexDedup\":            " << results.ParallelVertexDedup << "\n";
   std::cout << "  },\n";
 
   std::cout << "  \"averages\": {\n";
@@ -78,6 +88,7 @@ int main(int argn, char **argv) {
   std::cout << "    \"VertexDedup1\":                   " << results.VertexDedup1 / conf.num_iter << ",\n";
   std::cout << "    \"BuildTreeFromOrderedItems\":      " << results.BuildTreeFromOrderedItems / conf.num_iter << ",\n";
   std::cout << "    \"VertexDedup2\":                   " << results.VertexDedup2 / conf.num_iter << "\n";
+  std::cout << "    \"ParallelVertexDedup\":            " << results.ParallelVertexDedup / conf.num_iter << "\n";
   std::cout << "  }\n";
   std::cout << "}\n";
 }
@@ -97,6 +108,20 @@ void VertexDedup(HOTTree* tree) {
     counter.data_ = item[i].data;
     tree->VisitNearVertices(&counter, item[i].position, eps);
   }
+}
+
+void ParallelVertexDedup(HOTTree* tree) {
+  double eps = 1.0e-3;
+  auto item = tree->begin();
+  int n = std::distance(tree->begin(), tree->end());
+  tbb::parallel_for (tbb::blocked_range<int>(0, n, 1 << 10),
+    [&](const tbb::blocked_range<int>& range) {
+      CountVisits counter(nullptr);
+      for (int i = range.begin(); i != range.end(); ++i) {
+        counter.data_ = item[i].data;
+        tree->VisitNearVertices(&counter, item[i].position, eps);
+      }
+    });
 }
 
 

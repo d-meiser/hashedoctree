@@ -6,6 +6,7 @@ addons:
     - lcov
 before_install:
   - gem install coveralls-lcov
+  - source utilities/get_tbb.sh
 script:
   - mkdir -p build
   - cd build
