@@ -3,20 +3,20 @@
 #include <cmath>
 
 
-static int ComputeBucket(double min, double max, double pos, int num_buckets) {
+static uint8_t ComputeBucket(double min, double max, double pos, int num_buckets) {
   assert(max > min);
   double folded_pos = std::fmod(pos - min, max - min);
   if (folded_pos < 0) {
     folded_pos += max - min;
   }
-  int bucket = num_buckets * folded_pos / (max - min);
+  uint8_t bucket = num_buckets * folded_pos / (max - min);
   assert(bucket >= 0);
-  assert((uint32_t)bucket < num_buckets);
+  assert(bucket < num_buckets);
   return bucket;
 }
 
-uint8_t ComputeWideKey(HOTBoundingBox bbox, HOTPoint point) {
-  int a, b, c;
+uint8_t ComputeWideKey(const HOTBoundingBox& bbox, HOTPoint point) {
+  uint8_t a, b, c;
   a = ComputeBucket(bbox.min.x, bbox.max.x, point.x, 8);
   assert(a >= 0);
   assert(a < 8);
@@ -27,6 +27,21 @@ uint8_t ComputeWideKey(HOTBoundingBox bbox, HOTPoint point) {
   assert(c >= 0);
   assert(c < 4);
   return (a << 5) + (b << 2) + (c << 0);
+}
+
+void ComputeManyWideKeys(const HOTBoundingBox& bbox, const double* locations,
+    int n, int stride, uint8_t* keys) {
+  double dx = (bbox.max.x - bbox.min.x) / 8;
+  double dy = (bbox.max.y - bbox.min.y) / 8;
+  double dz = (bbox.max.z - bbox.min.z) / 4;
+  for (int i = 0; i < n; ++i) {
+    uint8_t a, b, c;
+    const double *l = locations + i * stride;
+    a = (l[0] - bbox.min.x) / dx;
+    b = (l[1] - bbox.min.y) / dy;
+    c = (l[2] - bbox.min.z) / dz;
+    keys[i] = (a << 5) + (b << 2) + (c << 0);
+  }
 }
 
 void SortByKey(const uint8_t* keys, int n, int* perm) {

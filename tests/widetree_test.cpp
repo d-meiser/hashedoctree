@@ -4,11 +4,9 @@
 
 
 TEST(ComputeWideKey, DoesntCrash) {
-  uint8_t key;
-  EXPECT_NO_THROW(key = ComputeWideKey(unit_cube(), {0.5, 0.5, 0.5}));
+  EXPECT_NO_THROW(ComputeWideKey(unit_cube(), {0.5, 0.5, 0.5}));
 }
 
 TEST(ComputeWideKey, WorksForOutOfBoundsCoords) {
-  uint8_t key;
-  EXPECT_NO_THROW(key = ComputeWideKey(unit_cube(), {-0.5, 10.5, 0.5}));
+  EXPECT_NO_THROW(ComputeWideKey(unit_cube(), {-0.5, 10.5, 0.5}));
 }

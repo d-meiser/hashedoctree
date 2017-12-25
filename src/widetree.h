@@ -3,7 +3,9 @@
 
 #include <hashedoctree.h>
 
-uint8_t ComputeWideKey(HOTBoundingBox bbox, HOTPoint location);
+uint8_t ComputeWideKey(const HOTBoundingBox& bbox, HOTPoint location);
+void ComputeManyWideKeys(const HOTBoundingBox& bbox, const double* locations,
+    int n, int stride, uint8_t* keys);
 
 void SortByKey(const uint8_t* keys, int n, int* perm);
 
