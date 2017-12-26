@@ -5,16 +5,9 @@
 #include <numeric>
 
 
-template <typename T>
-void ApplyPermutation(const int* perm, int n, const T* in, T* out) {
-  for (int i = 0; i < n; ++i) {
-    out[perm[i]] = in[i];
-  }
-}
-
-
 int main(int, char **) {
   int n = 1000000;
+  int buckets[257];
   uint64_t start, end;
 
   HOTBoundingBox bbox = unit_cube();
@@ -29,7 +22,7 @@ int main(int, char **) {
 
   std::vector<int> perm(n);
   start = rdtsc();
-  SortByKey(&keys[0], n, &perm[0]);
+  SortByKey(&keys[0], n, buckets, &perm[0]);
   end = rdtsc();
   std::cout << "SortByKey: " << (end - start) / 1.0e6 << std::endl;
 
@@ -41,7 +34,7 @@ int main(int, char **) {
 
   ComputeManyWideKeys(bbox, &sorted_items[0].position.x, n,  sizeof(sorted_items[0]) / sizeof(double), &keys[0]);
   start = rdtsc();
-  SortByKey(&keys[0], n, &perm[0]);
+  SortByKey(&keys[0], n, buckets, &perm[0]);
   end = rdtsc();
   std::cout << "SortByKey (pre sorted): " << (end - start) / 1.0e6 << std::endl;
 
