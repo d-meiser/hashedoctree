@@ -1,4 +1,5 @@
 #include <hashedoctree.h>
+#include <helpers.h>
 #include <cmath>
 #include <cassert>
 #include <iostream>

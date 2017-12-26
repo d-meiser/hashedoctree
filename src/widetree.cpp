@@ -1,4 +1,5 @@
 #include <widetree.h>
+#include <helpers.h>
 #include <cassert>
 #include <cmath>
 
@@ -101,7 +102,7 @@ class WideNode {
       }
     }
 
-    bool VisitNearVertices(HOTTree::VertexVisitor* visitor,
+    bool VisitNearVertices(SpatialSortTree::VertexVisitor* visitor,
         HOTPoint visitor_position, double eps2) {
       uint8_t key = ComputeWideKey(bbox_, visitor_position);
       WideNode* selected_child = children_[key].get();
@@ -167,7 +168,7 @@ std::vector<HOTItem>::iterator WideTree::end() {
   return items_.end();
 }
 
-bool WideTree::VisitNearVertices(HOTTree::VertexVisitor* visitor,
+bool WideTree::VisitNearVertices(SpatialSortTree::VertexVisitor* visitor,
     HOTPoint position, double eps2) {
   if (root_) {
     return root_->VisitNearVertices(visitor, position, eps2);
