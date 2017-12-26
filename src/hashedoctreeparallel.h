@@ -1,5 +1,5 @@
-#ifndef HASHED_OCTREE_H
-#define HASHED_OCTREE_H
+#ifndef HASHED_OCTREE_PARALLEL_H
+#define HASHED_OCTREE_PARALLEL_H
 
 #include <spatialsorttree.h>
 
@@ -23,7 +23,6 @@ HOTNodeKey HOTNodeParent(HOTNodeKey key);
 HOTKey HOTNodeBegin(HOTNodeKey key);
 HOTKey HOTNodeEnd(HOTNodeKey key);
 void HOTNodePrint(HOTNodeKey key);
-HOTBoundingBox ComputeChildBox(HOTBoundingBox bbox, int octant);
 
 
 // This should become an internal function down the road.
@@ -31,12 +30,12 @@ HOTKey HOTComputeHash(HOTBoundingBox bbox, HOTPoint point);
 
 class HOTNode;
 
-class HOTTree : public SpatialSortTree {
+class HOTTreeParallel : public SpatialSortTree {
   public:
-    HOTTree(HOTBoundingBox bbox);
-    HOTTree(HOTTree&&);
-    HOTTree& operator=(HOTTree&& rhs);
-    ~HOTTree() override;
+    HOTTreeParallel(HOTBoundingBox bbox);
+    HOTTreeParallel(HOTTreeParallel&&);
+    HOTTreeParallel& operator=(HOTTreeParallel&& rhs);
+    ~HOTTreeParallel() override;
 
     void InsertItems(const HOTItem* begin, const HOTItem* end) override;
 
