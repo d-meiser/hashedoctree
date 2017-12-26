@@ -3,7 +3,10 @@ set(HOT_SOURCES
     widetree.cpp
     )
 if (TBB_FOUND)
-  list(APPEND HOT_SOURCES hashedoctreeparallel.cpp)
+  list(APPEND HOT_SOURCES
+      hashedoctreeparallel.cpp
+      widetreeparallel.cpp
+      )
 endif ()
 add_library(hashedoctree ${HOT_SOURCES})
 target_include_directories(hashedoctree

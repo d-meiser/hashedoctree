@@ -8,6 +8,7 @@
 #ifdef HOT_HAVE_TBB
 #include <tbb/task_scheduler_init.h>
 #include <hashedoctreeparallel.h>
+#include <widetreeparallel.h>
 #endif
 
 
@@ -127,6 +128,7 @@ std::vector<SpatialSortTree*> GetTrees() {
   trees.push_back(new WideTree(unit_cube()));
 #ifdef HOT_HAVE_TBB
   trees.push_back(new HOTTreeParallel(unit_cube()));
+  trees.push_back(new WideTreeParallel(unit_cube()));
 #endif
   return trees;
 }
