@@ -1,6 +1,8 @@
 #ifndef SPATIAL_SORT_TREE_H
 #define SPATIAL_SORT_TREE_H
 
+#include <vector>
+
 
 struct HOTPoint {
   double x;
@@ -31,6 +33,9 @@ class SpatialSortTree {
         virtual bool Visit(HOTItem* item) = 0;
     };
     virtual bool VisitNearVertices(VertexVisitor* visitor, HOTPoint position, double eps) = 0;
+
+    virtual std::vector<HOTItem>::iterator begin() = 0;
+    virtual std::vector<HOTItem>::iterator end() = 0;
 };
 
 #endif

@@ -1,13 +1,23 @@
+#include <spatialsorttree.h>
 #include <hashedoctree.h>
+#include <widetree.h>
 #include <test_utilities.h>
 #include <string>
 #include <iostream>
+#include <cassert>
+#include <hot_config.h>
+#ifdef HOT_HAVE_TBB
 #include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
+#include <hashedoctreeparallel.h>
+#include <widetreeparallel.h>
+#endif
 
 
 struct Configuration {
   int num_vertices;
   int num_iter;
+  const char* tree_type;
 };
 
 struct TimingResults {
@@ -19,13 +29,20 @@ struct TimingResults {
 };
 
 Configuration parse_command_line(int argn, char **argv);
-HOTTree BuildTreeFromOrderedItems(HOTBoundingBox bbox, const HOTItem* begin, const HOTItem* end);
-void VertexDedup(HOTTree* tree);
-void ParallelVertexDedup(HOTTree* tree);
+std::unique_ptr<SpatialSortTree> BuildTreeWithRandomItems(HOTBoundingBox bbox, int n, const char* type);
+std::unique_ptr<SpatialSortTree> BuildTreeFromOrderedItems(
+    HOTBoundingBox bbox, const HOTItem* begin, const HOTItem* end, const char* type);
+void VertexDedup(SpatialSortTree* tree);
+void ParallelVertexDedup(SpatialSortTree* tree);
+std::unique_ptr<SpatialSortTree> TreeFromType(const HOTBoundingBox& bbox, const char* type);
 
 
 int main(int argn, char **argv) {
   Configuration conf = parse_command_line(argn, argv);
+
+#ifdef HOT_HAVE_TBB
+  tbb::task_scheduler_init scheduler(2);
+#endif
 
   TimingResults results = {};
 
@@ -43,31 +60,34 @@ int main(int argn, char **argv) {
 
     uint64_t start, end;
     start = rdtsc();
-    HOTTree tree = ConstructTreeWithRandomItems(unit_cube(), conf.num_vertices);
+    std::unique_ptr<SpatialSortTree> tree =
+        BuildTreeWithRandomItems(unit_cube(), conf.num_vertices, conf.tree_type);
     end = rdtsc();
     std::cout << "      \"ConstructTreeWithRandomItems\": " << (end - start) / 1.0e6 << ",\n";
     results.ConstructTreeWithRandomItems += (end - start) / 1.0e6;
 
     start = rdtsc();
-    VertexDedup(&tree);
+    VertexDedup(tree.get());
     end = rdtsc();
     std::cout << "      \"VertexDedup1\":                 " << (end - start) / 1.0e6 << ",\n";
     results.VertexDedup1 += (end - start) / 1.0e6;
 
     start = rdtsc();
-    HOTTree tree2 = BuildTreeFromOrderedItems(unit_cube(), &*tree.begin(), &*tree.end());
+    std::unique_ptr<SpatialSortTree> tree2 =
+        BuildTreeFromOrderedItems(unit_cube(), &*tree->begin(), &*tree->end(),
+        conf.tree_type);
     end = rdtsc();
     std::cout << "      \"BuildTreeFromOrderedItems\":    " << (end - start) / 1.0e6 << ",\n";
     results.BuildTreeFromOrderedItems += (end - start) / 1.0e6;
 
     start = rdtsc();
-    VertexDedup(&tree2);
+    VertexDedup(tree2.get());
     end = rdtsc();
     std::cout << "      \"VertexDedup2\":                 " << (end - start) / 1.0e6 << "\n";
     results.VertexDedup2 += (end - start) / 1.0e6;
 
     start = rdtsc();
-    ParallelVertexDedup(&tree2);
+    ParallelVertexDedup(tree2.get());
     end = rdtsc();
     std::cout << "      \"ParallelVertexDedup\":          " << (end - start) / 1.0e6 << "\n";
     results.ParallelVertexDedup += (end - start) / 1.0e6;
@@ -91,15 +111,29 @@ int main(int argn, char **argv) {
   std::cout << "    \"ParallelVertexDedup\":            " << results.ParallelVertexDedup / conf.num_iter << "\n";
   std::cout << "  }\n";
   std::cout << "}\n";
+
+#ifdef HOT_HAVE_TBB
+  scheduler.terminate();
+#endif
 }
 
-HOTTree BuildTreeFromOrderedItems(HOTBoundingBox bbox, const HOTItem* begin, const HOTItem* end) {
-  HOTTree tree(bbox);
-  tree.InsertItems(begin, end);
-  return std::move(tree);
+std::unique_ptr<SpatialSortTree> BuildTreeWithRandomItems(HOTBoundingBox bbox, int n, const char* type) {
+  assert(n > 0);
+  std::unique_ptr<SpatialSortTree> tree = TreeFromType(bbox, type);
+  auto entities = BuildEntitiesAtRandomLocations(bbox, n);
+  auto items = BuildItems(&entities);
+  tree->InsertItems(&items[0], &items[0] + n);
+  return tree;
 }
 
-void VertexDedup(HOTTree* tree) {
+std::unique_ptr<SpatialSortTree> BuildTreeFromOrderedItems(HOTBoundingBox bbox,
+    const HOTItem* begin, const HOTItem* end, const char* type) {
+  std::unique_ptr<SpatialSortTree> tree = TreeFromType(bbox, type);
+  tree->InsertItems(begin, end);
+  return tree;
+}
+
+void VertexDedup(SpatialSortTree* tree) {
   double eps = 1.0e-3;
   CountVisits counter(nullptr);
   auto item = tree->begin();
@@ -110,7 +144,7 @@ void VertexDedup(HOTTree* tree) {
   }
 }
 
-void ParallelVertexDedup(HOTTree* tree) {
+void ParallelVertexDedup(SpatialSortTree* tree) {
   double eps = 1.0e-3;
   auto item = tree->begin();
   int n = std::distance(tree->begin(), tree->end());
@@ -139,6 +173,7 @@ Configuration parse_command_line(int argn, char **argv) {
   Configuration conf;
   conf.num_vertices = 100;
   conf.num_iter = 10;
+  conf.tree_type = "HashedOctree";
 
   int i;
   i = find_string("--help", argn, argv);
@@ -169,3 +204,12 @@ Configuration parse_command_line(int argn, char **argv) {
 
   return conf;
 }
+
+std::unique_ptr<SpatialSortTree> TreeFromType(const HOTBoundingBox& bbox,
+    const char* type) {
+  if (std::string("HashedOctree") == type) {
+    return std::unique_ptr<SpatialSortTree>(new HOTTree(bbox));
+  }
+  return nullptr;
+}
+
