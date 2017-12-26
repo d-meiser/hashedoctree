@@ -17,6 +17,7 @@
 struct Configuration {
   int num_vertices;
   int num_iter;
+  int num_threads;
   const char* tree_type;
 };
 
@@ -41,7 +42,7 @@ int main(int argn, char **argv) {
   Configuration conf = parse_command_line(argn, argv);
 
 #ifdef HOT_HAVE_TBB
-  tbb::task_scheduler_init scheduler(2);
+  tbb::task_scheduler_init scheduler(conf.num_threads);
 #endif
 
   TimingResults results = {};
@@ -52,6 +53,8 @@ int main(int argn, char **argv) {
   std::cout << "{\n";
   std::cout << "  \"num_vertices\": " << conf.num_vertices << ",\n";
   std::cout << "  \"num_iter\": " << conf.num_iter << ",\n";
+  std::cout << "  \"num_threads\": " << conf.num_threads << ",\n";
+  std::cout << "  \"tree_type\": \"" << conf.tree_type << "\",\n";
   for (int i = 0; i < conf.num_iter; ++i) {
 
     std::cout << "  \"iteration " << i << "\": {\n";
@@ -167,12 +170,21 @@ static int find_string(std::string s, int argn, char **argv) {
   return i;
 }
 
-static const std::string usage("Usage: vertex_dedup_test [--num_vertices num_vertices] [--num_iter num_iter]");
+static const std::string usage(
+    "Usage: vertex_dedup_test "
+    "[--num_vertices num_vertices] "
+    "[--num_iter num_iter] "
+    "[--num_threads num_threads] "
+    "[--tree_type tree_type"
+    "\n\n"
+    "Available tree_types:\n"
+    "HashedOctree\n");
 
 Configuration parse_command_line(int argn, char **argv) {
   Configuration conf;
   conf.num_vertices = 100;
   conf.num_iter = 10;
+  conf.num_threads = 1;
   conf.tree_type = "HashedOctree";
 
   int i;
@@ -200,6 +212,26 @@ Configuration parse_command_line(int argn, char **argv) {
       exit(1);
     }
     conf.num_iter = std::stoi(std::string(argv[i + 1]));
+  }
+
+  i = find_string("--num_threads", argn, argv);
+  if (i != argn) {
+    if (i == argn - 1) {
+      std::cout << "Error: Number of threads parameter missing." << std::endl;
+      std::cout << usage << std::endl;
+      exit(1);
+    }
+    conf.num_threads = std::stoi(std::string(argv[i + 1]));
+  }
+
+  i = find_string("--tree_type", argn, argv);
+  if (i != argn) {
+    if (i == argn - 1) {
+      std::cout << "Error: tree type parameter missing." << std::endl;
+      std::cout << usage << std::endl;
+      exit(1);
+    }
+    conf.tree_type = argv[i + 1];
   }
 
   return conf;
