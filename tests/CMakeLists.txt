@@ -2,7 +2,7 @@ add_library(test_utilities test_utilities.cpp)
 target_include_directories(test_utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(test_utilities hashedoctree)
 
-foreach (t hashedoctree widetree)
+foreach (t hashedoctree widetree tree)
   add_executable(${t}_test ${t}_test.cpp)
   target_link_libraries(${t}_test hashedoctree test_utilities gtest_main ${COV_LIBRARIES})
   add_test(${t}_test ${t}_test)
