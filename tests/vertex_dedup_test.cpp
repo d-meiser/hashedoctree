@@ -178,7 +178,13 @@ static const std::string usage(
     "[--tree_type tree_type"
     "\n\n"
     "Available tree_types:\n"
-    "HashedOctree\n");
+    "  HashedOctree\n"
+    "  WideTree\n"
+#ifdef HOT_HAVE_TBB
+    "  HashedOctreeParallel\n"
+    "  WideTreeParallel\n"
+#endif
+    );
 
 Configuration parse_command_line(int argn, char **argv) {
   Configuration conf;
@@ -241,6 +247,12 @@ std::unique_ptr<SpatialSortTree> TreeFromType(const HOTBoundingBox& bbox,
     const char* type) {
   if (std::string("HashedOctree") == type) {
     return std::unique_ptr<SpatialSortTree>(new HOTTree(bbox));
+  } else if (std::string("WideTree") == type) {
+    return std::unique_ptr<SpatialSortTree>(new WideTree(bbox));
+  } else if (std::string("HashedOctreeParallel") == type) {
+    return std::unique_ptr<SpatialSortTree>(new HOTTreeParallel(bbox));
+  } else if (std::string("WideTreeParallel") == type) {
+    return std::unique_ptr<SpatialSortTree>(new WideTreeParallel(bbox));
   }
   return nullptr;
 }
