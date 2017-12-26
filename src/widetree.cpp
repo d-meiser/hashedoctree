@@ -57,24 +57,23 @@ void SortByKey(const uint8_t* keys, int n, int buckets[257], int* perm) {
 }
 
 class WideNode {
-  static const int MAX_NUM_LEAF_VERTICES = 256;
-
   public:
     WideNode(HOTBoundingBox bbox) : bbox_(bbox) {}
 
-    void InsertItemsInPlace(HOTItem* begin, HOTItem* end) {
+    void InsertItemsInPlace(HOTItem* begin, HOTItem* end, int max_num_leaf_items) {
       int n = std::distance(begin, end);
       if (n == 0) return;
       std::vector<HOTItem> temp(n);
-      InsertItems(begin, end, &temp[0]);
+      InsertItems(begin, end, &temp[0], max_num_leaf_items);
       std::copy(temp.begin(), temp.end(), begin);
     }
 
-    void InsertItems(const HOTItem* begin, const HOTItem* end, HOTItem* sorted_items) {
+    void InsertItems(const HOTItem* begin, const HOTItem* end,
+        HOTItem* sorted_items, int max_num_leaf_items) {
       items_begin_ = sorted_items;
       items_end_ = sorted_items + std::distance(begin, end);
       int n = std::distance(begin, end);
-      if (n < MAX_NUM_LEAF_VERTICES) {
+      if (n < max_num_leaf_items) {
         std::copy(begin, end, sorted_items);
         return;
       }
@@ -98,7 +97,8 @@ class WideNode {
           children_[i].reset(new WideNode(child_box));
         }
         children_[i]->InsertItems(
-            begin + buckets_[i], begin + buckets_[i + 1], items_begin_ + buckets_[i]);
+            begin + buckets_[i], begin + buckets_[i + 1],
+            items_begin_ + buckets_[i], max_num_leaf_items);
       }
     }
 
@@ -141,7 +141,7 @@ class WideNode {
     int buckets_[257];
 };
 
-WideTree::WideTree(HOTBoundingBox bbox) : bbox_(bbox) {}
+WideTree::WideTree(HOTBoundingBox bbox) : bbox_(bbox), max_num_leaf_items_(256) {}
 WideTree::WideTree(WideTree&&) = default;
 WideTree& WideTree::operator=(WideTree&&) = default;
 WideTree::~WideTree() = default;
@@ -153,7 +153,7 @@ void WideTree::InsertItems(const HOTItem* begin, const HOTItem* end) {
   if (!root_) {
     root_.reset(new WideNode(bbox_));
   }
-  root_->InsertItems(begin, end, &items_[0]);
+  root_->InsertItems(begin, end, &items_[0], max_num_leaf_items_);
 }
 
 size_t WideTree::Size() const {
@@ -175,3 +175,8 @@ bool WideTree::VisitNearVertices(SpatialSortTree::VertexVisitor* visitor,
   }
   return true;
 }
+
+void WideTree::SetMaxNumLeafItems(int max_num_leaf_items) {
+  max_num_leaf_items_ = max_num_leaf_items;
+}
+
