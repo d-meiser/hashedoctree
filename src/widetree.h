@@ -42,7 +42,7 @@ void SortByKey(const uint8_t* keys, int n, int buckets[257], int* perm);
 template <typename T>
 void ApplyPermutation(const int* perm, int n, const T* in, T* out) {
   for (int i = 0; i < n; ++i) {
-    out[perm[i]] = in[i];
+    out[i] = in[perm[i]];
   }
 }
 

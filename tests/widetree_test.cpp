@@ -76,3 +76,83 @@ TEST(WideTree, VertexInNeighbouringNodeIsVisited) {
   EXPECT_GT(counter.count_, 0);
 }
 
+TEST(WideTree, VertexInNeighbouringNodeIsVisitedForDeepTree) {
+  double eps = 1.0e-10;
+  int n = 300;
+
+  std::vector<Entity> entities = BuildEntitiesAtRandomLocations(unit_cube(), n);
+  std::vector<HOTItem> items = BuildItems(&entities);
+
+  CountVisits counter(items[0].data);
+
+  // Along x
+  items[0].position = HOTPoint({0.5 - 0.4 * eps, 0.1, 0.1});
+  items[1].position = HOTPoint({0.5 + 0.4 * eps, 0.1, 0.1});
+  counter.Reset();
+  WideTree tree(unit_cube());
+  tree.SetMaxNumLeafItems(5);
+  tree.InsertItems(&items[0], &items[0] + items.size());
+  tree.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 0);
+}
+
+TEST(WideTree, VertexInNeighbouringNodeIsVisitedForDeepTreeY) {
+  double eps = 1.0e-10;
+  int n = 300;
+
+  std::vector<Entity> entities = BuildEntitiesAtRandomLocations(unit_cube(), n);
+  std::vector<HOTItem> items = BuildItems(&entities);
+
+  CountVisits counter(items[0].data);
+
+  // Along x
+  items[0].position = HOTPoint({0.1, 0.5 - 0.4 * eps, 0.1});
+  items[1].position = HOTPoint({0.1, 0.5 + 0.4 * eps, 0.1});
+  counter.Reset();
+  WideTree tree(unit_cube());
+  tree.SetMaxNumLeafItems(3);
+  tree.InsertItems(&items[0], &items[0] + items.size());
+  tree.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 0);
+}
+
+TEST(WideTree, VertexInNeighbouringNodeIsVisitedForDeepTreeZ) {
+  double eps = 1.0e-10;
+  int n = 300;
+
+  std::vector<Entity> entities = BuildEntitiesAtRandomLocations(unit_cube(), n);
+  std::vector<HOTItem> items = BuildItems(&entities);
+
+  CountVisits counter(items[0].data);
+
+  // Along x
+  items[0].position = HOTPoint({0.1, 0.1, 0.5 - 0.4 * eps});
+  items[1].position = HOTPoint({0.1, 0.1, 0.5 + 0.4 * eps});
+  counter.Reset();
+  WideTree tree(unit_cube());
+  tree.SetMaxNumLeafItems(3);
+  tree.InsertItems(&items[0], &items[0] + items.size());
+  tree.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 0);
+}
+
+TEST(WideTree, SpotCheck) {
+  double eps = 1.0e-10;
+  int n = 2;
+
+  std::vector<Entity> entities = BuildEntitiesAtRandomLocations(unit_cube(), n);
+  std::vector<HOTItem> items = BuildItems(&entities);
+
+  CountVisits counter(items[0].data);
+
+  // Along x
+  items[0].position = HOTPoint({0.5 - 0.4 * eps, 0.1, 0.1});
+  items[1].position = HOTPoint({0.5 + 0.4 * eps, 0.1, 0.1});
+  counter.Reset();
+  WideTree tree(unit_cube());
+  tree.SetMaxNumLeafItems(1);
+  tree.InsertItems(&items[0], &items[0] + items.size());
+  tree.VisitNearVertices(&counter, items[0].position, eps);
+  EXPECT_GT(counter.count_, 0);
+}
+

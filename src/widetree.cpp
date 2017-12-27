@@ -66,6 +66,8 @@ class WideNode {
       std::vector<HOTItem> temp(n);
       InsertItems(begin, end, &temp[0], max_num_leaf_items);
       std::copy(temp.begin(), temp.end(), begin);
+      items_begin_ = begin;
+      items_end_ = end;
     }
 
     void InsertItems(const HOTItem* begin, const HOTItem* end,
@@ -73,7 +75,7 @@ class WideNode {
       items_begin_ = sorted_items;
       items_end_ = sorted_items + std::distance(begin, end);
       int n = std::distance(begin, end);
-      if (n < max_num_leaf_items) {
+      if (n <= max_num_leaf_items) {
         std::copy(begin, end, sorted_items);
         return;
       }
@@ -81,12 +83,12 @@ class WideNode {
       ComputeManyWideKeys(bbox_, &begin->position.x, n, 4, &keys[0]);
       std::vector<int> perm(n);
       SortByKey(&keys[0], n, buckets_, &perm[0]);
-      std::vector<HOTItem> temp(n);
       ApplyPermutation(&perm[0], n, begin, sorted_items);
-      double dx = (bbox_.max.x - bbox_.min.x) / 4;
-      double dy = (bbox_.max.y - bbox_.min.y) / 4;
+      double dx = (bbox_.max.x - bbox_.min.x) / 8;
+      double dy = (bbox_.max.y - bbox_.min.y) / 8;
       double dz = (bbox_.max.z - bbox_.min.z) / 4;
       for (int i = 0; i < 256; ++i) {
+        if (buckets_[i + 1] - buckets_[i] == 0) continue;
         if (!children_[i]) {
           int a = (i >> 5) & 0x7;
           int b = (i >> 2) & 0x7;
@@ -96,9 +98,8 @@ class WideNode {
               {bbox_.min.x + (a + 1) * dx, bbox_.min.y + (b + 1) * dy, bbox_.min.z + (c + 1) * dz}};
           children_[i].reset(new WideNode(child_box));
         }
-        children_[i]->InsertItems(
-            begin + buckets_[i], begin + buckets_[i + 1],
-            items_begin_ + buckets_[i], max_num_leaf_items);
+        children_[i]->InsertItemsInPlace(
+            items_begin_ + buckets_[i], items_begin_ + buckets_[i + 1], max_num_leaf_items);
       }
     }
 
@@ -107,7 +108,7 @@ class WideNode {
       uint8_t key = ComputeWideKey(bbox_, visitor_position);
       WideNode* selected_child = children_[key].get();
       if (selected_child &&
-          DistanceFromBoundary(selected_child->bbox_, visitor_position)) {
+          DistanceFromBoundary(selected_child->bbox_, visitor_position) > eps2) {
         return selected_child->VisitNearVertices(visitor, visitor_position, eps2);
       }
       bool leaf = true;
