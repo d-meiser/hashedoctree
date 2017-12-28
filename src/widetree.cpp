@@ -62,7 +62,11 @@ class WideNode {
 
     void InsertItemsInPlace(HOTItem* begin, HOTItem* end, int max_num_leaf_items) {
       int n = std::distance(begin, end);
-      if (n == 0) return;
+      if (n == 0) {
+        items_begin_ = begin;
+        items_end_ = end;
+        return;
+      }
       std::vector<HOTItem> temp(n);
       InsertItems(begin, end, &temp[0], max_num_leaf_items);
       std::copy(temp.begin(), temp.end(), begin);
