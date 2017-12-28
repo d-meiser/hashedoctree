@@ -1,5 +1,8 @@
 sudo: false
 language: cpp
+compilers:
+  - gcc
+  - clang
 addons:
   apt:
     packages:
