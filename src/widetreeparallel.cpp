@@ -6,24 +6,25 @@
 
 
 class WideNode {
-  static const int MAX_NUM_LEAF_VERTICES = 256;
-
   public:
     WideNode(HOTBoundingBox bbox) : bbox_(bbox) {}
 
-    void InsertItemsInPlace(HOTItem* begin, HOTItem* end) {
+    void InsertItemsInPlace(HOTItem* begin, HOTItem* end, int max_num_leaf_items) {
       int n = std::distance(begin, end);
       if (n == 0) return;
       std::vector<HOTItem> temp(n);
-      InsertItems(begin, end, &temp[0]);
+      InsertItems(begin, end, &temp[0], max_num_leaf_items);
       std::copy(temp.begin(), temp.end(), begin);
+      items_begin_ = begin;
+      items_end_ = end;
     }
 
-    void InsertItems(const HOTItem* begin, const HOTItem* end, HOTItem* sorted_items) {
+    void InsertItems(const HOTItem* begin, const HOTItem* end,
+        HOTItem* sorted_items, int max_num_leaf_items) {
       items_begin_ = sorted_items;
       items_end_ = sorted_items + std::distance(begin, end);
       int n = std::distance(begin, end);
-      if (n < MAX_NUM_LEAF_VERTICES) {
+      if (n <= max_num_leaf_items) {
         std::copy(begin, end, sorted_items);
         return;
       }
@@ -31,12 +32,12 @@ class WideNode {
       ComputeManyWideKeys(bbox_, &begin->position.x, n, 4, &keys[0]);
       std::vector<int> perm(n);
       SortByKey(&keys[0], n, buckets_, &perm[0]);
-      std::vector<HOTItem> temp(n);
       ApplyPermutation(&perm[0], n, begin, sorted_items);
-      double dx = (bbox_.max.x - bbox_.min.x) / 4;
-      double dy = (bbox_.max.y - bbox_.min.y) / 4;
+      double dx = (bbox_.max.x - bbox_.min.x) / 8;
+      double dy = (bbox_.max.y - bbox_.min.y) / 8;
       double dz = (bbox_.max.z - bbox_.min.z) / 4;
       for (int i = 0; i < 256; ++i) {
+        if (buckets_[i + 1] - buckets_[i] == 0) continue;
         if (!children_[i]) {
           int a = (i >> 5) & 0x7;
           int b = (i >> 2) & 0x7;
@@ -46,8 +47,8 @@ class WideNode {
               {bbox_.min.x + (a + 1) * dx, bbox_.min.y + (b + 1) * dy, bbox_.min.z + (c + 1) * dz}};
           children_[i].reset(new WideNode(child_box));
         }
-        children_[i]->InsertItems(
-            begin + buckets_[i], begin + buckets_[i + 1], items_begin_ + buckets_[i]);
+        children_[i]->InsertItemsInPlace(
+            items_begin_ + buckets_[i], items_begin_ + buckets_[i + 1], max_num_leaf_items);
       }
     }
 
@@ -56,7 +57,7 @@ class WideNode {
       uint8_t key = ComputeWideKey(bbox_, visitor_position);
       WideNode* selected_child = children_[key].get();
       if (selected_child &&
-          DistanceFromBoundary(selected_child->bbox_, visitor_position)) {
+          DistanceFromBoundary(selected_child->bbox_, visitor_position) > eps2) {
         return selected_child->VisitNearVertices(visitor, visitor_position, eps2);
       }
       bool leaf = true;
@@ -90,7 +91,7 @@ class WideNode {
     int buckets_[257];
 };
 
-WideTreeParallel::WideTreeParallel(HOTBoundingBox bbox) : bbox_(bbox) {}
+WideTreeParallel::WideTreeParallel(HOTBoundingBox bbox) : bbox_(bbox), max_num_leaf_items_(256) {}
 WideTreeParallel::WideTreeParallel(WideTreeParallel&&) = default;
 WideTreeParallel& WideTreeParallel::operator=(WideTreeParallel&&) = default;
 WideTreeParallel::~WideTreeParallel() = default;
@@ -102,7 +103,7 @@ void WideTreeParallel::InsertItems(const HOTItem* begin, const HOTItem* end) {
   if (!root_) {
     root_.reset(new WideNode(bbox_));
   }
-  root_->InsertItems(begin, end, &items_[0]);
+  root_->InsertItems(begin, end, &items_[0], max_num_leaf_items_);
 }
 
 size_t WideTreeParallel::Size() const {
@@ -124,3 +125,8 @@ bool WideTreeParallel::VisitNearVertices(SpatialSortTree::VertexVisitor* visitor
   }
   return true;
 }
+
+void WideTreeParallel::SetMaxNumLeafItems(int max_num_leaf_items) {
+  max_num_leaf_items_ = max_num_leaf_items;
+}
+

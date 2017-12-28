@@ -25,10 +25,13 @@ class WideTreeParallel : public SpatialSortTree {
     std::vector<HOTItem>::iterator begin();
     std::vector<HOTItem>::iterator end();
 
+    void SetMaxNumLeafItems(int maxnum_leaf_items);
+
   private:
     HOTBoundingBox bbox_;
     std::vector<HOTItem> items_;
     std::unique_ptr<WideNode> root_;
+    int max_num_leaf_items_;
 };
 
 uint8_t ComputeWideKey(const HOTBoundingBox& bbox, HOTPoint location);
