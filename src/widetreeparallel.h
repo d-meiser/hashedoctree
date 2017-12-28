@@ -22,8 +22,8 @@ class WideTreeParallel : public SpatialSortTree {
     bool VisitNearVertices(SpatialSortTree::VertexVisitor* visitor, HOTPoint position, double eps2);
 
     size_t Size() const;
-    std::vector<HOTItem>::iterator begin();
-    std::vector<HOTItem>::iterator end();
+    std::vector<HOTItem>::iterator begin() override;
+    std::vector<HOTItem>::iterator end() override;
 
     void SetMaxNumLeafItems(int maxnum_leaf_items);
 

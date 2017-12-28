@@ -41,8 +41,8 @@ class HOTTreeParallel : public SpatialSortTree {
 
     bool VisitNearVertices(VertexVisitor* visitor, HOTPoint position, double eps2) override;
 
-    std::vector<HOTItem>::iterator begin();
-    std::vector<HOTItem>::iterator end();
+    std::vector<HOTItem>::iterator begin() override;
+    std::vector<HOTItem>::iterator end() override;
 
     // Some diagnostics;
     int NumNodes() const;
