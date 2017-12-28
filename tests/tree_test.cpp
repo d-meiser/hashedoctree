@@ -126,9 +126,15 @@ std::vector<SpatialSortTree*> GetTrees() {
   std::vector<SpatialSortTree*> trees;
   trees.push_back(new HOTTree(unit_cube()));
   trees.push_back(new WideTree(unit_cube()));
+  WideTree* anotherWideTree(new WideTree(unit_cube()));
+  anotherWideTree->SetMaxNumLeafItems(5);
+  trees.push_back(anotherWideTree);
 #ifdef HOT_HAVE_TBB
   trees.push_back(new HOTTreeParallel(unit_cube()));
   trees.push_back(new WideTreeParallel(unit_cube()));
+  WideTreeParallel* yetAnotherWideTree(new WideTreeParallel(unit_cube()));
+  yetAnotherWideTree->SetMaxNumLeafItems(5);
+  trees.push_back(yetAnotherWideTree);
 #endif
   return trees;
 }
