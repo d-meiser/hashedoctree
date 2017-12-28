@@ -91,7 +91,7 @@ int main(int argn, char **argv) {
     std::cout << "      \"VertexDedup2\":                 " << (end - start) / 1.0e6 << "\n";
     results.VertexDedup2 += (end - start) / 1.0e6;
 
-#if HOT_HAVE_TBB
+#ifdef HOT_HAVE_TBB
     start = rdtsc();
     ParallelVertexDedup(tree2.get());
     end = rdtsc();
