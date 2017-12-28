@@ -15,4 +15,6 @@ target_include_directories(hashedoctree
     ${PROJECT_BINARY_DIR}
     )
 
-target_link_libraries(hashedoctree tbb)
+if (TBB_FOUND)
+  target_link_libraries(hashedoctree tbb)
+endif ()

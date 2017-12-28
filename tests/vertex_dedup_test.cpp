@@ -34,7 +34,9 @@ std::unique_ptr<SpatialSortTree> BuildTreeWithRandomItems(HOTBoundingBox bbox, i
 std::unique_ptr<SpatialSortTree> BuildTreeFromOrderedItems(
     HOTBoundingBox bbox, const HOTItem* begin, const HOTItem* end, const char* type);
 void VertexDedup(SpatialSortTree* tree);
+#ifdef HOT_HAVE_TBB
 void ParallelVertexDedup(SpatialSortTree* tree);
+#endif
 std::unique_ptr<SpatialSortTree> TreeFromType(const HOTBoundingBox& bbox, const char* type);
 
 
@@ -45,7 +47,7 @@ int main(int argn, char **argv) {
   tbb::task_scheduler_init scheduler(conf.num_threads);
 #endif
 
-  TimingResults results = {};
+  TimingResults results = {0, 0, 0, 0, 0};
 
   std::cout.precision(5);
   std::cout << std::scientific;
@@ -89,11 +91,13 @@ int main(int argn, char **argv) {
     std::cout << "      \"VertexDedup2\":                 " << (end - start) / 1.0e6 << "\n";
     results.VertexDedup2 += (end - start) / 1.0e6;
 
+#if HOT_HAVE_TBB
     start = rdtsc();
     ParallelVertexDedup(tree2.get());
     end = rdtsc();
     std::cout << "      \"ParallelVertexDedup\":          " << (end - start) / 1.0e6 << "\n";
     results.ParallelVertexDedup += (end - start) / 1.0e6;
+#endif
 
     std::cout << "    }\n  }," << std::endl;
   }
@@ -147,6 +151,7 @@ void VertexDedup(SpatialSortTree* tree) {
   }
 }
 
+#ifdef HOT_HAVE_TBB
 void ParallelVertexDedup(SpatialSortTree* tree) {
   double eps = 1.0e-3;
   auto item = tree->begin();
@@ -160,7 +165,7 @@ void ParallelVertexDedup(SpatialSortTree* tree) {
       }
     });
 }
-
+#endif
 
 static int find_string(std::string s, int argn, char **argv) {
   int i = 1;
@@ -249,10 +254,12 @@ std::unique_ptr<SpatialSortTree> TreeFromType(const HOTBoundingBox& bbox,
     return std::unique_ptr<SpatialSortTree>(new HOTTree(bbox));
   } else if (std::string("WideTree") == type) {
     return std::unique_ptr<SpatialSortTree>(new WideTree(bbox));
+#ifdef HOT_HAVE_TBB
   } else if (std::string("HashedOctreeParallel") == type) {
     return std::unique_ptr<SpatialSortTree>(new HOTTreeParallel(bbox));
   } else if (std::string("WideTreeParallel") == type) {
     return std::unique_ptr<SpatialSortTree>(new WideTreeParallel(bbox));
+#endif
   }
   return nullptr;
 }

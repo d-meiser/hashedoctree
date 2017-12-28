@@ -10,6 +10,9 @@ endforeach ()
 
 foreach (t vertex_dedup_test counting_sort_test)
   add_executable(${t} ${t}.cpp)
-  target_link_libraries(${t} hashedoctree test_utilities tbb)
+  target_link_libraries(${t} hashedoctree test_utilities)
+  if (TBB_FOUND)
+    target_link_libraries(${t} tbb)
+  endif()
 endforeach ()
 
