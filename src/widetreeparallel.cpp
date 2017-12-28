@@ -91,7 +91,7 @@ class WideNode {
     int buckets_[257];
 };
 
-WideTreeParallel::WideTreeParallel(HOTBoundingBox bbox) : bbox_(bbox), max_num_leaf_items_(256) {}
+WideTreeParallel::WideTreeParallel(HOTBoundingBox bbox) : bbox_(bbox), max_num_leaf_items_(32) {}
 WideTreeParallel::WideTreeParallel(WideTreeParallel&&) = default;
 WideTreeParallel& WideTreeParallel::operator=(WideTreeParallel&&) = default;
 WideTreeParallel::~WideTreeParallel() = default;

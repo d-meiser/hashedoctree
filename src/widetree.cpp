@@ -142,7 +142,7 @@ class WideNode {
     int buckets_[257];
 };
 
-WideTree::WideTree(HOTBoundingBox bbox) : bbox_(bbox), max_num_leaf_items_(256) {}
+WideTree::WideTree(HOTBoundingBox bbox) : bbox_(bbox), max_num_leaf_items_(32) {}
 WideTree::WideTree(WideTree&&) = default;
 WideTree& WideTree::operator=(WideTree&&) = default;
 WideTree::~WideTree() = default;
