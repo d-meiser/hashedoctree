@@ -21,7 +21,10 @@ script:
   - cd build-release
   - cmake -DCMAKE_BUILD_TYPE=Release -DHOT_ENABLE_COVERAGE=OFF -DBUILD_GMOCK=OFF -DCMAKE_CXX_FLAGS='-ffast-math -march=native -O3 -DNDEBUG -std=c++11' -DBUILD_GTEST=OFF ..
   - make vertex_dedup_test
-  - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000
+  - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000 --tree_type HashedOctree
+  - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000 --tree_type WideTree
+  - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000 --tree_type HashedOctreeParallel --num_threads 2
+  - ./tests/vertex_dedup_test --num_iter 3 --num_vertices 1000000 --tree_type WideTreeParallel --num_threads 2
   - cd ../build
 after_success:
   - lcov -d tests -d src -base-directory .. -c -o coverage.info
